@@ -34,7 +34,7 @@ class DmozSpider(scrapy.spiders.Spider):
         for type_pid, v in self.channel_ids.items():
             urls = []
             # if type_pid in ['1', '2', '23', '4', '']:
-            if type_pid in []:
+            if type_pid in ['1']:
                 continue
             channel = v.get('channel')
             iarea = v.get('iarea')
@@ -153,38 +153,7 @@ class DmozSpider(scrapy.spiders.Spider):
         vod_writer = ''                 # 编剧
         vod_behind = ''                 # 幕后
         typ = jjson.get('typ')
-        print(typ)
-        # try:
-        #     if isinstance(typ[0], str):
-        #         vod_tag1 = typ[0]
-        #     else:
-        #         vod_tag1 = typ[0][0]
-        # except Exception:
-        #     vod_tag1 = ''
-        # try:
-        #     if isinstance(typ[1], str):
-        #         vod_tag2 = typ[1]
-        #     else:
-        #         vod_tag2 = typ[1][0]
-        # except Exception:
-        #     vod_tag2 = ''
-        # try:
-        #     vod_tag3 = vod_actors[0][0].replace(r'\n', '').replace(r'\r', '').\
-        #     replace('\\"', '').replace("'", '').replace('\\', '')
-        # except Exception:
-        #     vod_tag3 = ''
-        # vod_tag = ''
-        # if vod_tag1:
-        #     vod_tag += vod_tag1 + ','
-        # if vod_tag2:
-        #     vod_tag += vod_tag2 + ','
-        # if vod_tag3:
-        #     vod_tag += vod_tag3
-        # else:
-        #     vod_tag = vod_tag[:-1]
 
-        # vod_tag = vod_tag1 + ',' + vod_tag2 + ',' + vod_tag3
-        # + ',' + typ[1][0] + ',' + vod_actors[0][0]  # 标签
         if typ:
             vod_tag = typ[0]
             try:
@@ -255,12 +224,17 @@ class DmozSpider(scrapy.spiders.Spider):
         collect_page = vod_total//30
         yield Request(url=collect_url, callback=self.collect_list, dont_filter=True,
                       meta={'tx_item': tx_item, 'firstcoolects': 1})
+        print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'+ collect_url +str(collect_page))
+        for i in range(1, collect_page+1):
 
-        for i in range(collect_page):
             if collect_page != vod_total/30:
-                collctlast_id = video_ids[30 * i + 1]
+                collctlast_id = video_ids[30 * i]
+
                 url = f'https://v.qq.com/x/cover/{vod_tx_albumId}/{collctlast_id}.html'
-                yield Request(url=url, callback=self.collect_list, dont_filter=True, meta={'tx_item': tx_item, 'firstcoolects': 0})
+                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'+url)
+                yield Request(url=url, callback=self.collect_list, dont_filter=True,
+                              meta={'tx_item': tx_item, 'firstcoolects': 0})
+                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'+url+'完毕')
 
     def collect_list(self, response):
         tx_item = response.meta.get('tx_item')
@@ -312,9 +286,9 @@ class DmozSpider(scrapy.spiders.Spider):
             tx_item['vod_isend'] = isend
             tx_item['vod_duration'] = duration
 
-        if response.meta.get('firstcoolects', 0) == 1:
-            yield tx_item
-        # yield tx_item
+        # if response.meta.get('firstcoolects', 0) == 1:
+        #     yield tx_item
+        yield tx_item
         if collects_spans:
             for collects_span in collects_spans:
                 vod_id = 0
@@ -322,6 +296,7 @@ class DmozSpider(scrapy.spiders.Spider):
                 vod_is_from = tx_item['vod_is_from']                  # 来源
                 albumId = collects_span.xpath('@id')[0]            # 集id
                 collectionss = collects_span.xpath('a/text()')       # 集
+
                 collection_title = ''  # 每集标题
                 if collectionss:
                     try:
@@ -367,7 +342,8 @@ class DmozSpider(scrapy.spiders.Spider):
                 tx_vod_collection_item['vod_is_from'] = vod_is_from
                 tx_vod_collection_item['albumId'] = albumId
                 tx_vod_collection_item['collection'] = collection
-                tx_vod_collection_item['collection_title'] = collection_title
+                tx_vod_collection_item['collection_title'] = collection_title.replace(r'\n', '').replace(r'\r', ''). \
+                    replace('\\"', '').replace("'", '').replace('\\', '')  # 爬取数据
                 tx_vod_collection_item['collection_url'] = collection_url
                 tx_vod_collection_item['collection_type'] = collection_type
                 tx_vod_collection_item['collection_is_advance'] = collection_is_advance
@@ -422,7 +398,8 @@ class DmozSpider(scrapy.spiders.Spider):
                 # collection_title = collect.xpath('a/div[@class="figure_detail_three_row"]/strong/text()')  # 每集标题
                 collection_title = collect.xpath('a/img/@alt')  # 每集标题
                 if collection_title:
-                    collection_title = collection_title[0].replace('\n', '').replace(' ', '')
+                    collection_title = collection_title[0].replace(r'\n', '').replace(r'\r', ''). \
+                    replace('\\"', '').replace("'", '').replace('\\', '')  # 爬取数据
                 else:
                     collection_title = ''
 
@@ -471,3 +448,4 @@ class DmozSpider(scrapy.spiders.Spider):
                 tx_vod_collection_item['vod_tx_albumId'] = vod_tx_albumId
 
                 yield tx_vod_collection_item
+
