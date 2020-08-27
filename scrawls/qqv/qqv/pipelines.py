@@ -6,11 +6,19 @@ from qqv.items import Tx_vod, Tx_vod_collection
 
 class Save:
     def __init__(self):
-        self.conn = pymysql.connect(host='192.168.1.216',
+        # 测试
+        # self.conn = pymysql.connect(host='192.168.1.216',
+        #                             port=3306,
+        #                             user='cjzcg',
+        #                             password='tceng^7Iu96ytes',
+        #                             db='tcengvod', charset='utf8', )
+
+        # 正式
+        self.conn = pymysql.connect(host='rm-j6co0332808hbxpcw.mysql.rds.aliyuncs.com',
                                     port=3306,
-                                    user='cjzcg',
-                                    password='tceng^7Iu96ytes',
-                                    db='tcengvod', charset='utf8', )
+                                    user='uservide',
+                                    password='CHjduTY793CKLp',
+                                    db='video', charset='utf8mb4', )
         self.curs = self.conn.cursor()
 
     def log(self, mes, file='aqyi.log', dic='{}'):
