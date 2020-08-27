@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../aqyi/.idea/aqyi.iml" filepath="$PROJECT_DIR$/../../aqyi/.idea/aqyi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../jjjjjj/douyin_bot-master/.idea/douyin_bot-master.iml" filepath="$PROJECT_DIR$/../jjjjjj/douyin_bot-master/.idea/douyin_bot-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/qqv.iml" filepath="$PROJECT_DIR$/.idea/qqv.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../qqv1/.idea/qqv1.iml" filepath="$PROJECT_DIR$/../qqv1/.idea/qqv1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../scvenv/.idea/scvenv.iml" filepath="$PROJECT_DIR$/../scvenv/.idea/scvenv.iml" />
+    </modules>
+  </component>
+</project>

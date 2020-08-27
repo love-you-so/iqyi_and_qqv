@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="jdk" jdkName="Python 3.7 (qqv)" jdkType="Python SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="qqv1" />
+    <orderEntry type="module" module-name="aqyi" />
+    <orderEntry type="module" module-name="scvenv" />
+    <orderEntry type="module" module-name="douyin_bot-master" />
+  </component>
+</module>
