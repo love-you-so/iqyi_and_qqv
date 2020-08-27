@@ -92,7 +92,7 @@ class DmozSpider(scrapy.spiders.Spider):
             vod_name = div.xpath('a/@title')[0]                # 视频名称
             vod_tx_albumId = div.xpath('a/@data-float')[0]     # 视频唯一id
             url = div.xpath('a/@href')                         # 视频地址
-            vod_pic = 'http://' + div.xpath('a/img/@src')[0]   # 视频图片
+            vod_pic = 'http:' + div.xpath('a/img/@src')[0]   # 视频图片
 
             mark = div.xpath('a/img')
             if len(mark) <= 1:
@@ -224,7 +224,6 @@ class DmozSpider(scrapy.spiders.Spider):
         collect_page = vod_total//30
         yield Request(url=collect_url, callback=self.collect_list, dont_filter=True,
                       meta={'tx_item': tx_item, 'firstcoolects': 1})
-        print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'+ collect_url +str(collect_page))
         for i in range(1, collect_page+1):
 
             if collect_page != vod_total/30:
@@ -234,7 +233,6 @@ class DmozSpider(scrapy.spiders.Spider):
                 print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'+url)
                 yield Request(url=url, callback=self.collect_list, dont_filter=True,
                               meta={'tx_item': tx_item, 'firstcoolects': 0})
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'+url+'完毕')
 
     def collect_list(self, response):
         tx_item = response.meta.get('tx_item')
@@ -282,12 +280,30 @@ class DmozSpider(scrapy.spiders.Spider):
                 duration = ''
                 vod_state = 1
                 isend = 1
+
             tx_item['vod_state'] = vod_state
             tx_item['vod_isend'] = isend
             tx_item['vod_duration'] = duration
 
         # if response.meta.get('firstcoolects', 0) == 1:
         #     yield tx_item
+
+        areas = html.xpath('//div[@class="video_tags _video_tags"]')
+        print(response.url + str(len(areas)))
+        areas = html.xpath('//div[@class="video_tags _video_tags"]/span')
+        print(response.url + str(len(areas)))
+        areas = html.xpath('//div[@class="video_tags _video_tags"]/span/text()')
+        try:
+            area = areas[0]
+        except IndexError:
+            areas = html.xpath('//div[@class="video_tags _video_tags"]/span/text()')
+            try:
+                area = areas[0]
+            except IndexError:
+                area = ''
+        print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' + area)
+
+
         yield tx_item
         if collects_spans:
             for collects_span in collects_spans:
@@ -332,7 +348,7 @@ class DmozSpider(scrapy.spiders.Spider):
                 collection_time_add = time.time()
                 collection_time_up = time.time()
                 collection_status = 0
-                collection_details = json.dumps({'details': htmll}).replace(r'\n', '').replace(r'\r', '').\
+                collection_details = json.dumps({'details': {}}).replace(r'\n', '').replace(r'\r', '').\
             replace('\\"', '').replace("'", '').replace('\\', '')                # 爬取数据
                 collection_last_time = ''  # 目标资源站最后更新时间
 
@@ -351,7 +367,7 @@ class DmozSpider(scrapy.spiders.Spider):
                 tx_vod_collection_item['collection_is_state'] = collection_is_state
                 tx_vod_collection_item['collection_weight'] = collection_weight
                 tx_vod_collection_item['collection_last_time'] = collection_last_time
-                tx_vod_collection_item['collection_details'] = collection_details
+                # tx_vod_collection_item['collection_details'] = collection_details
                 tx_vod_collection_item['collection_time_add'] = collection_time_add
                 tx_vod_collection_item['collection_time_up'] = collection_time_up
                 tx_vod_collection_item['collection_status'] = collection_status
@@ -423,7 +439,7 @@ class DmozSpider(scrapy.spiders.Spider):
                 collection_time_add = time.time()
                 collection_time_up = time.time()
                 collection_status = 0
-                collection_details = json.dumps({'details': htmll}).replace(r'\n', '').replace(r'\r', ''). \
+                collection_details = json.dumps({'details': {}}).replace(r'\n', '').replace(r'\r', ''). \
                     replace('\\"', '').replace("'", '').replace('\\', '')  # 爬取数据
                 collection_last_time = ''  # 目标资源站最后更新时间
 
@@ -441,7 +457,7 @@ class DmozSpider(scrapy.spiders.Spider):
                 tx_vod_collection_item['collection_is_state'] = collection_is_state
                 tx_vod_collection_item['collection_weight'] = collection_weight
                 tx_vod_collection_item['collection_last_time'] = collection_last_time
-                tx_vod_collection_item['collection_details'] = collection_details
+                # tx_vod_collection_item['collection_details'] = collection_details
                 tx_vod_collection_item['collection_time_add'] = collection_time_add
                 tx_vod_collection_item['collection_time_up'] = collection_time_up
                 tx_vod_collection_item['collection_status'] = collection_status
