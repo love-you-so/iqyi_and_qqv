@@ -153,38 +153,51 @@ class DmozSpider(scrapy.spiders.Spider):
         vod_writer = ''                 # 编剧
         vod_behind = ''                 # 幕后
         typ = jjson.get('typ')
-
-        try:
-            if isinstance(typ[0], str):
-                vod_tag1 = typ[0]
-            else:
-                vod_tag1 = typ[0][0]
-        except Exception:
-            vod_tag1 = ''
-        try:
-            if isinstance(typ[1], str):
-                vod_tag2 = typ[1]
-            else:
-                vod_tag2 = typ[1][0]
-        except Exception:
-            vod_tag2 = ''
-        try:
-            vod_tag3 = vod_actors[0][0].replace(r'\n', '').replace(r'\r', '').\
-            replace('\\"', '').replace("'", '').replace('\\', '')
-        except Exception:
-            vod_tag3 = ''
-        vod_tag = ''
-        if vod_tag1:
-            vod_tag += vod_tag1 + ','
-        if vod_tag2:
-            vod_tag += vod_tag2 + ','
-        if vod_tag3:
-            vod_tag += vod_tag3
-        else:
-            vod_tag = vod_tag[:-1]
+        print(typ)
+        # try:
+        #     if isinstance(typ[0], str):
+        #         vod_tag1 = typ[0]
+        #     else:
+        #         vod_tag1 = typ[0][0]
+        # except Exception:
+        #     vod_tag1 = ''
+        # try:
+        #     if isinstance(typ[1], str):
+        #         vod_tag2 = typ[1]
+        #     else:
+        #         vod_tag2 = typ[1][0]
+        # except Exception:
+        #     vod_tag2 = ''
+        # try:
+        #     vod_tag3 = vod_actors[0][0].replace(r'\n', '').replace(r'\r', '').\
+        #     replace('\\"', '').replace("'", '').replace('\\', '')
+        # except Exception:
+        #     vod_tag3 = ''
+        # vod_tag = ''
+        # if vod_tag1:
+        #     vod_tag += vod_tag1 + ','
+        # if vod_tag2:
+        #     vod_tag += vod_tag2 + ','
+        # if vod_tag3:
+        #     vod_tag += vod_tag3
+        # else:
+        #     vod_tag = vod_tag[:-1]
 
         # vod_tag = vod_tag1 + ',' + vod_tag2 + ',' + vod_tag3
         # + ',' + typ[1][0] + ',' + vod_actors[0][0]  # 标签
+        if typ:
+            vod_tag = typ[0]
+            try:
+                if isinstance(typ[1], str):
+                    vod_tag += ',' + typ[1]
+                else:
+                    for i in typ[1]:
+                        vod_tag += ',' + i
+            except IndexError:
+                pass
+        else:
+            vod_tag = ''
+
         try:
             vod_blurb = jjson.get('c', {}).get('description').replace(r'\n', '').replace(r'\r', '').\
                 replace('\\"', '').replace("\'", '').replace("’", '').replace(r'\u', '').replace('\\', '')   # 简介
