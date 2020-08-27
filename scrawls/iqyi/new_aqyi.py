@@ -11,7 +11,6 @@ import traceback
 from tools.mian_db import Save
 from tools.proxy import Proxy
 from settings import channel_ids, headers
-
 DEBUG = False  # 是否抛出异常  ，为了保证出现异常时不使整个程序停止
 
 
@@ -25,7 +24,7 @@ def debug(e):
 class Crawl:
 
     def __init__(self):
-        self.is_from = 2  # 来源 0:默认未标识来源  1:腾讯视频 2 爱奇艺 3 优酷 4 豆瓣 5bibi 6 芒果tv
+        self.is_from = 2   # 来源 0:默认未标识来源  1:腾讯视频 2 爱奇艺 3 优酷 4 豆瓣 5bibi 6 芒果tv
         self.p = Proxy()
 
     def proxy(self):
@@ -41,13 +40,14 @@ class Crawl:
 
         i = 0
         response = None
-        while i < 10:  # 如果下载失败重试三次
+        while i<10:  # 如果下载失败重试三次
             ip, id = self.proxy()
+
             try:
                 if header:
-                    response = requests.get(url=url, timeout=(6, 60), headers=headers, proxies={'https': ip})
+                    response = requests.get(url=url, headers=headers, proxies={'https': ip})
                 else:
-                    response = requests.get(url=url, timeout=(6, 60), proxies={'https': ip})
+                    response = requests.get(url=url, proxies={'https': ip})
                 break
             except Exception as e:
                 debug(e)
@@ -88,14 +88,14 @@ class Crawl:
         except Exception as e:
             debug(e)
             response = {}
-        print('<><><<><', response)
+        print('<><><<><',response)
         has_next = response.get('has_next', 0)  # 是否有下一页
-        lists = response.get('list', [])  # 视频信息列表（一页中的所有视频）
+        lists = response.get('list', [])   # 视频信息列表（一页中的所有视频）
         type_dic = {'type_pid': type_pid, 'type_id': type_id}
 
         for album in lists:
             albumId_dic, albumId, playUrl = self._album(album)
-            dic = self.tv(albumId)  # 爬取每个视频的全部信息
+            dic = self.tv(albumId)          # 爬取每个视频的全部信息
             dic.update(albumId_dic)
             dic.update(type_dic)
             yield dic, albumId, playUrl
@@ -153,10 +153,10 @@ class Crawl:
         # vod_is_from = 2   # 来源 0:默认未标识来源  1:腾讯视频 2 爱奇艺 3 优酷 4 豆瓣 5bibi 6 芒果tv
         # vod_is_advance = album.get('isAdvance')  # 是否超前点播
         # vod_is_pay_mark = album.get('payMark')  # 是否为vip
-        vod_douban_albumId = album.get('')  # 目标视频关键id
-        vod_tx_albumId = album.get('')  # 目标视频关键id
-        vod_iqiyi_albumId = album.get('albumId')  # 目标视频关键id
-        vod_yk_albumId = album.get('')  # 目标视频关键id
+        vod_douban_albumId = album.get('')   # 目标视频关键id
+        vod_tx_albumId = album.get('')   # 目标视频关键id
+        vod_iqiyi_albumId = album.get('albumId')   # 目标视频关键id
+        vod_yk_albumId = album.get('')   # 目标视频关键id
         # vod_status = album.get('')   # 视频状态 0等待自动检测 1 正常 2 下线
         # vod_details = album.get('')  # 爬取数据 详情  json格式
         dic = {
@@ -169,13 +169,19 @@ class Crawl:
 
         return dic, vod_iqiyi_albumId, playUrl
 
-    def dic_to_str(self, dics):
+    def dic_to_str(self, dics, subType=None):
         if dics:
-            s = ''  # 导演列表
+            s = ''          # 导演列表
             for i in dics:
                 if isinstance(i, dict):
-                    s += i.get('name')
-                    s += ','
+
+                    if subType or subType == 0:
+                        if i.get('subType') == subType:
+                            s += i.get('name')
+                            s += ','
+                    else:
+                        s += i.get('name')
+                        s += ','
 
                 else:
                     s = i
@@ -193,18 +199,17 @@ class Crawl:
         :return:
         '''
         url = f'https://pcw-api.iqiyi.com/video/video/videoinfowithuser/{albumId}?agent_type=1&authcookie=&subkey={albumId}&subscribe=1'
+        print('tv url>>>>' + url)
         response = self.crawl(url=url).text
         album = json.loads(response).get('data')
 
         vod_name = album.get('name')  # 视频标题
-        vod_sub = album.get('subtitle')  # 视频副标题 data
-        vod_en = album.get('')  # 视频别名
+        vod_sub = album.get('subtitle')   # 视频副标题 data
+        vod_en = album.get('')   # 视频别名
         vod_tags = album.get('categories')  # 视频标签
-        try:
-            vod_tag = self.dic_to_str(vod_tags[:4])
-        except IndexError:
-            vod_tag = self.dic_to_str(vod_tags)
-
+        vod_tag = self.dic_to_str(vod_tags, subType=2)
+        vod_area = self.dic_to_str(vod_tags, subType=1)  # 发行地区
+        vod_lang = self.dic_to_str(vod_tags, subType=0)  # 发行地区
         vod_pic = album.get('imageUrl')  # 视频图片
         vod_pic_thumb = album.get('')  # 视频缩略图
         vod_pic_slide = album.get('')  # 视频海报图
@@ -215,7 +220,7 @@ class Crawl:
             vod_director = None
         try:
             vod_actors = album.get('people').get('main_charactor')
-            vod_actor = self.dic_to_str(vod_actors)  # 主演
+            vod_actor = self.dic_to_str(vod_actors)   # 主演
         except AttributeError:
             vod_actor = None
             # try:
@@ -236,36 +241,36 @@ class Crawl:
         except AttributeError:
             vod_writer = None
 
-        vod_behind = album.get('')  # 幕后
+        vod_behind = album.get('')   # 幕后
 
-        vod_blurb = album.get('description')  # 简介
+        vod_blurb = album.get('description')    # 简介
         if vod_blurb:
-            vod_blurb = vod_blurb.replace("'", '').replace(r'\n', '').replace(r'\r', '').replace('\\"', '').replace("'",
-                                                                                                                    '').replace(
-                '\\', '')
+            vod_blurb = vod_blurb.replace("'", '').replace(r'\n', '').replace(r'\r', '').replace('\\"', '').replace("'", '').replace('\\', '')
         vod_remarks = album.get('')  # 备注
 
         vod_total = album.get('videoCount')  # 总集数
         vod_serial = album.get('latestOrder')  # 连载数
 
-        vod_pubdate = album.get('publishTime')  # 上映日期
+        # vod_pubdate = album.get('publishTime')  # 上映日期 改成日期
+        vod_pubdate = album.get('period')  # 上映日期 改成日期
         vod_tv = album.get('television')  # 电视频道
 
-        vod_weekday = album.get('')  # 节目周期
+        vod_weekday = album.get('')   # 节目周期
 
-        vod_areas = album.get('areas')
-        if vod_areas:
-            vod_area = ''  # 发行地区
-            for i in vod_areas:
-                if isinstance(i, dict):
-                    vod_area += i.get('name')
-                    vod_area += ','
-                else:
-                    vod_area = i
-        else:
-            vod_area = album.get('')  # 发行地区
+        # vod_areas = album.get('areas')
+        # if vod_areas:
+        #     vod_area = ''          # 发行地区
+        #     for i in vod_areas:
+        #         if isinstance(i, dict):
+        #             vod_area += i.get('name')
+        #             vod_area += ','
+        #         else:
+        #             vod_area = i
+        # else:
+        #     vod_area = album.get('')
 
-        vod_lang = album.get('')  # 对白语言
+
+        # vod_lang = album.get('')   # 对白语言
 
         vod_year = album.get('period')[:4]  # 上映年代
         vod_version = album.get('')  # 影片版本
@@ -279,9 +284,9 @@ class Crawl:
 
         vod_time_add = time.time()  # 添加时间, 第一次填入之后不应改变
 
-        vod_time_up = time.time()  # 更新时间， 每次修改都更新
+        vod_time_up = time.time()   # 更新时间， 每次修改都更新
 
-        vod_is_from = self.is_from  # 来源 0:默认未标识来源  1:腾讯视频 2 爱奇艺 3 优酷 4 豆瓣 5bibi 6 芒果tv
+        vod_is_from = self.is_from   # 来源 0:默认未标识来源  1:腾讯视频 2 爱奇艺 3 优酷 4 豆瓣 5bibi 6 芒果tv
         isAdvance = album.get('isAdvance')  # 是否超前点播
         if isAdvance:
             vod_is_advance = 1
@@ -294,9 +299,8 @@ class Crawl:
         else:
             vod_is_pay_mark = 0
 
-        vod_status = 0  # 视频状态 0等待自动检测 1 正常 2 下线
-        vod_details = response.replace(r'+\n', '').replace(r'\r', '').replace("'", '').replace('\\"', '').replace('\\',
-                                                                                                                  '')  # 爬取数据 详情  json格式  \ 在存入时会产生编码问题
+        vod_status = 0   # 视频状态 0等待自动检测 1 正常 2 下线
+        vod_details = response.replace(r'+\n', '').replace(r'\r', '').replace("'", '').replace('\\"', '').replace('\\', '')  # 爬取数据 详情  json格式  \ 在存入时会产生编码问题
 
         dic = {
             'vod_name': vod_name,
@@ -347,14 +351,12 @@ class Crawl:
                 vod_id = vod_id  # 视频表自增id
                 collect_lis = []
                 epsodelist = data.get('epsodelist', [])  # 所有正片
-                epsodelis = self.collect_dict(epsodelist, response=response, collection_is_state=1, vod_id=vod_id,
-                                              vod_name=vod_name)
+                epsodelis = self.collect_dict(epsodelist, response=response, collection_is_state=1, vod_id=vod_id, vod_name=vod_name)
                 updateprevuelist = data.get('updateprevuelist', [])  # 所有非vip预告片
                 updateprevuelis = self.collect_dict(updateprevuelist, response=response, collection_is_state=0,
                                                     vod_id=vod_id, vod_name=vod_name)
                 vipprevuelist = data.get('vipprevuelist', [])  # 所有vip预告
-                vipprevuelis = self.collect_dict(vipprevuelist, response=response, collection_is_state=0, vod_id=vod_id,
-                                                 vod_name=vod_name)
+                vipprevuelis = self.collect_dict(vipprevuelist, response=response, collection_is_state=0, vod_id=vod_id, vod_name=vod_name)
                 collect_lis.extend(epsodelis)
                 collect_lis.extend(updateprevuelis)
                 collect_lis.extend(vipprevuelis)
@@ -365,8 +367,7 @@ class Crawl:
                 response = self.crawl(url=url)
                 response = response.text
                 data = json.loads(response).get('data')
-                collect_lis = self.collect_dict([data], response=response, collection_is_state=1, vod_id=vod_id,
-                                                vod_name=vod_name)
+                collect_lis = self.collect_dict([data], response=response, collection_is_state=1, vod_id=vod_id, vod_name=vod_name)
             else:
                 url = f'https://pcw-api.iqiyi.com/video/video/baseinfo/{albumId}'
                 print('单集路由>>>', url)
@@ -386,8 +387,8 @@ class Crawl:
 
                 collect_lis = []
                 for i in json.loads(response1.text).get('data', {}).values():
-                    collect_list = self.collect_dict(collect_lis=i, response=response1.text, collection_is_state=1,
-                                                     vod_id=vod_id, vod_name=vod_name)
+
+                    collect_list = self.collect_dict(collect_lis=i, response=response1.text, collection_is_state=1, vod_id=vod_id, vod_name=vod_name)
                     collect_lis.extend(collect_list)
         except Exception as e:
             debug(e)
@@ -422,8 +423,7 @@ class Crawl:
             collection_is_state = collection_is_state  # 资源类型 1 正片 2 预告片
             collection_weight = collec.get('', 0)  # 权重 优先级
             collection_last_time = collec.get('period')  # 最后更新时间
-            collection_details = json.dumps(collec, ensure_ascii=False).replace(r'\n', '').replace(r'\r', '').replace(
-                '\\"', '').replace("'", '').replace('\\', '')  # 爬取页面数据 详情json
+            collection_details = json.dumps(collec, ensure_ascii=False).replace(r'\n', '').replace(r'\r', '').replace('\\"', '').replace("'", '').replace('\\', '')  # 爬取页面数据 详情json
             collection_time_add = time.time()  # 添加时间
             collection_time_up = time.time()  # 更新时间
             collection_status = collec.get('', 0)  # 视频状态 0等待自动检测 1 正常 2 下线
@@ -456,12 +456,12 @@ def main(mode=24):
         for dic, albumId, playUrl, type_pid in c.parse(mode=mode):
             where = f'vod_iqiyi_albumId={albumId} or vod_douban_albumId={albumId} or vod_yk_albumId={albumId} or vod_tx_albumId={albumId}'
             try:
-                vod_id, vod_name = mysqll.save(dic, 'tx_vod', where, 'vod_iqiyi_albumId', )
+                vod_id, vod_name = mysqll.save(dic, 'tx_vod',  where, 'vod_iqiyi_albumId',)
                 collect_lis = c.collect(albumId=albumId, vod_id=vod_id, type_pid=type_pid, vod_name=vod_name)
                 for collect_li in collect_lis:
                     pprint.pprint(collect_li)
                     where = f'albumId={collect_li.get("albumId")}'
-                    id, vod_name = mysqll.save(collect_li, 'tx_vod_collection', where, 'albumId', )
+                    id, vod_name = mysqll.save(collect_li, 'tx_vod_collection', where, 'albumId',)
             except UnicodeEncodeError as e:
                 debug(e)
             except Exception as e:
@@ -476,7 +476,6 @@ def main(mode=24):
 
 if __name__ == '__main__':
     import sys
-
     try:
         mode = sys.argv[1]
     except IndexError:
