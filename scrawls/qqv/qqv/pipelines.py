@@ -14,7 +14,7 @@ class Save:
         #                             db='tcengvod', charset='utf8', )
 
         # 正式
-        self.conn = pymysql.connect(host='rm-j6co0332808hbxpcw.mysql.rds.aliyuncs.com',
+        self.conn = pymysql.connect(host='rm-j6co0332808hbxpcwpo.mysql.rds.aliyuncs.com',
                                     port=3306,
                                     user='uservide',
                                     password='CHjduTY793CKLp',
