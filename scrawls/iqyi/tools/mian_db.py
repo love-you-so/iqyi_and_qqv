@@ -1,19 +1,52 @@
 import pymysql
+import os
 
 
 class Save:
     def __init__(self):
-        self.conn = pymysql.connect(host='192.168.1.216',
+        # 测试库
+        # self.conn = pymysql.connect(host='192.168.1.216',
+        #                             port=3306,
+        #                             user='cjzcg',
+        #                             password='tceng^7Iu96ytes',
+        #                             db='tcengvod', charset='utf8', )
+        # 正式
+        self.conn = pymysql.connect(host='rm-j6co0332808hbxpcwpo.mysql.rds.aliyuncs.com',
                                     port=3306,
-                                    user='cjzcg',
-                                    password='tceng^7Iu96ytes',
-                                    db='tcengvod', charset='utf8', )
+                                    user='uservide',
+                                    password='CHjduTY793CKLp',
+                                    db='video', charset='utf8mb4', )
+
         self.curs = self.conn.cursor()
 
     def log(self, mes):
-        with open('../../aqyi.log', 'a') as f:
+        file = "aqyi.log"
+        file_dir = os.getcwd() + '/runtime/'
+        self.video_mkdir(file_dir)
+        file = str(file_dir) + str(file)
+        with open(file, 'a') as f:
             f.write(mes)
             f.write('\n')
+
+    # 创建文件夹
+    def video_mkdir(self, path):
+        # 去除首位空格
+        path = path.strip()
+        # 去除尾部 \ 符号
+        path = path.rstrip("\\")
+        # 判断路径是否存在
+        # 存在     True
+        # 不存在   False
+        isExists = os.path.exists(path)
+        # 判断结果
+        if not isExists:
+            # 如果不存在则创建目录
+            # 创建目录操作函数
+            os.makedirs(path)
+            return True
+        else:
+            # 如果目录存在则不创建，并提示目录已存在
+            return False
 
     def query(self, sql):
         self.curs.execute(sql)

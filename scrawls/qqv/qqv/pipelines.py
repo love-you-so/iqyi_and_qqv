@@ -1,5 +1,6 @@
 # coding: utf8
 import pymysql
+import os
 
 from qqv.items import Tx_vod, Tx_vod_collection
 
@@ -21,12 +22,35 @@ class Save:
                                     db='video', charset='utf8mb4', )
         self.curs = self.conn.cursor()
 
-    def log(self, mes, file='aqyi.log', dic='{}'):
+    def log(self, mes, file='qq.log', dic='{}'):
+        file_dir = os.getcwd() + '/runtime/'
+        self.video_mkdir(file_dir)
+        file = str(file_dir) + str(file)
         with open(file, 'a', encoding='utf8') as f:
             f.write(mes)
             f.write('\n')
             f.write(dic)
             f.write('\n')
+
+    # 创建文件夹
+    def video_mkdir(self, path):
+        # 去除首位空格
+        path = path.strip()
+        # 去除尾部 \ 符号
+        path = path.rstrip("\\")
+        # 判断路径是否存在
+        # 存在     True
+        # 不存在   False
+        isExists = os.path.exists(path)
+        # 判断结果
+        if not isExists:
+            # 如果不存在则创建目录
+            # 创建目录操作函数
+            os.makedirs(path)
+            return True
+        else:
+            # 如果目录存在则不创建，并提示目录已存在
+            return False
 
     def query(self, sql, dic='{}'):
         try:
@@ -37,7 +61,6 @@ class Save:
             mes = 'error>>>>>>>' + sql
             self.log(mes, 'error.sql', dic)
         return None, None
-
 
     def insert(self, dic, table):
         k = list(dic.keys())
