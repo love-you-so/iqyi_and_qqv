@@ -1,4 +1,6 @@
 # coding: utf8
+import json
+
 import pymysql
 
 from qqv.items import Tx_vod, Tx_vod_collection
@@ -23,23 +25,23 @@ class Save:
             )
         self.curs = self.conn.cursor()
 
-    def log(self, mes, file='aqyi.log', dic='{}'):
+    def log(self, mes, file='tx.log', error=''):
         with open(file, 'a', encoding='utf8') as f:
             if mes == None:
                 mes = ''
             f.write(mes)
             f.write('\n')
-            f.write(dic)
+            f.write(error)
             f.write('\n')
 
-    def query(self, sql, dic='{}'):
+    def query(self, sql):
         try:
             self.curs.execute(sql)
             self.log(sql)
             return self.curs, self.conn
-        except Exception:
+        except Exception as e:
             mes = 'error>>>>>>>' + sql
-            self.log(mes, 'error.sql', dic)
+            self.log(mes, 'error.sql', str(e))
         return None, None
 
 
@@ -119,14 +121,10 @@ class Save:
 
         if s.endswith(', '):
             s = s[:-2]
-
-        # n_sql = f'update {table} set {s} where vod_iqiyi_albumId = {albumId} or vod_douban_albumId = ' \
-        #           f'{albumId} or vod_yk_albumId={albumId} or vod_tx_albumId={albumId}'
-
         n_sql = f'update {table} set {s} where {where}'
         return n_sql
 
-    def save(self, dic, table, where=None, *select):
+    def save(self, dic, table, where=None, *select, returns=('id', 'vod_name')):
         # 判断是否存在
         if where:
             sql = self.select(table, *select, where=where)
@@ -144,12 +142,11 @@ class Save:
                 n_sql = self.insertall(dic, table)
             else:
                 return
-        dicc = dic.get('vod_blurb')
         print('save %s' % dic.get('vod_name'))
-        self.query(sql=n_sql, dic=dicc)
+        self.query(sql=n_sql)
         # 查找本次操作的id
         try:
-            sql = self.select(table, *('id', 'vod_name'), where=where)
+            sql = self.select(table, *returns, where=where)
             self.query(sql=sql)
             id, vod_name = self.curs.fetchall()[0]
             return id, vod_name
@@ -170,8 +167,14 @@ class QqvPipeline:
             sav = item.__dict__.get('_values')
             albumId = sav.get('vod_tx_albumId')
             save = Save()
+            vod_details = sav.pop('vod_details', {})  # 取出json
             where = f'vod_iqiyi_albumId="{albumId}" or vod_douban_albumId="{albumId}" or vod_yk_albumId="{albumId}" or vod_tx_albumId="{albumId}"'
-            id, vod_name = save.save(sav, 'tx_vod', where, 'vod_tx_albumId')
+            vod_id, vod_name = save.save(sav, 'tx_vod', where, 'vod_tx_albumId')
+            if vod_details:
+                where = f'vod_id={vod_id}'
+                if isinstance(vod_details, dict):
+                    vod_details = json.dumps(vod_details)
+                save.save({'vod_id': vod_id, 'vod_details': vod_details}, 'tx_vod_json', where, 'vod_id', returns=('id', ))  # 存储json
             save.close()
             return item
 
@@ -193,6 +196,9 @@ class QqvPipeline:
                     id = ids[0]
                     sav['vod_id'] = id
                     where = f'albumId="{sav.get("albumId")}"'
-                    id, vod_name = save.save(sav, 'tx_vod_collection', where, 'albumId', )
+                    # collection_details = sav.pop('collection_details')
+                    collection_id, vod_name = save.save(sav, 'tx_vod_collection', where, 'albumId')
+                    # save.save({'collection_id': collection_id, 'collection_details': collection_details},
+                    #             table='tx_vod_collection_json')
                     conn.close()
                     return item

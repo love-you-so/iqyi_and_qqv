@@ -456,12 +456,16 @@ def main(mode=24):
         for dic, albumId, playUrl, type_pid in c.parse(mode=mode):
             where = f'vod_iqiyi_albumId={albumId} or vod_douban_albumId={albumId} or vod_yk_albumId={albumId} or vod_tx_albumId={albumId}'
             try:
+                vod_details = dic.pop('vod_details')
                 vod_id, vod_name = mysqll.save(dic, 'tx_vod',  where, 'vod_iqiyi_albumId',)
+                mysqll.save({'vod_id': vod_id, 'vod_details': vod_details}, table='tx_vod_json')
                 collect_lis = c.collect(albumId=albumId, vod_id=vod_id, type_pid=type_pid, vod_name=vod_name)
                 for collect_li in collect_lis:
                     pprint.pprint(collect_li)
                     where = f'albumId={collect_li.get("albumId")}'
-                    id, vod_name = mysqll.save(collect_li, 'tx_vod_collection', where, 'albumId',)
+                    collection_details = collect_li.pop('collection_details')
+                    collection_id, vod_name = mysqll.save(collect_li, 'tx_vod_collection', where, 'albumId',)
+                    mysqll.save({'collection_id': collection_id, 'collection_details': collection_details}, table='tx_vod_collection_json')
             except UnicodeEncodeError as e:
                 debug(e)
             except Exception as e:

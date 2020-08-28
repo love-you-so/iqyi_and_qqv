@@ -287,10 +287,6 @@ class DmozSpider(scrapy.spiders.Spider):
         # if response.meta.get('firstcoolects', 0) == 1:
         #     yield tx_item
 
-        areas = html.xpath('//div[@class="video_tags _video_tags"]')
-        print(response.url + str(len(areas)))
-        areas = html.xpath('//div[@class="video_tags _video_tags"]/span')
-        print(response.url + str(len(areas)))
         areas = html.xpath('//div[@class="video_tags _video_tags"]/span/text()')
         try:
             vod_area = areas[0].strip()
