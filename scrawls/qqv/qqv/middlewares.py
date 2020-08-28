@@ -5,7 +5,8 @@
 import json
 import random
 import time
-
+import traceback
+import os
 import requests
 from scrapy import signals
 import pymysql

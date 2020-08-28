@@ -225,7 +225,7 @@ class DmozSpider(scrapy.spiders.Spider):
         yield Request(url=collect_url, callback=self.collect_list, dont_filter=True,
                       meta={'tx_item': tx_item, 'firstcoolects': 1})
         for i in range(1, collect_page+1):
-
+            break  # 取消爬取分集
             if collect_page != vod_total/30:
                 collctlast_id = video_ids[30 * i]
 
@@ -301,6 +301,7 @@ class DmozSpider(scrapy.spiders.Spider):
 
         tx_item['vod_area'] = vod_area
         yield tx_item
+        return  # 取消爬取分集
         if collects_spans:
             for collects_span in collects_spans:
                 vod_id = 0

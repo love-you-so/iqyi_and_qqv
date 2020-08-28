@@ -459,7 +459,8 @@ def main(mode=24):
                 vod_details = dic.pop('vod_details')
                 vod_id, vod_name = mysqll.save(dic, 'tx_vod',  where, 'vod_iqiyi_albumId',)
                 mysqll.save({'vod_id': vod_id, 'vod_details': vod_details}, table='tx_vod_json')
-                collect_lis = c.collect(albumId=albumId, vod_id=vod_id, type_pid=type_pid, vod_name=vod_name)
+                # collect_lis = c.collect(albumId=albumId, vod_id=vod_id, type_pid=type_pid, vod_name=vod_name)
+                collect_lis = []
                 for collect_li in collect_lis:
                     pprint.pprint(collect_li)
                     where = f'albumId={collect_li.get("albumId")}'
