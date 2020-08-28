@@ -75,7 +75,6 @@ class QqvDownloaderMiddleware:
         return s
 
     def process_request(self, request, spider):
-
         # Called for each request that goes through the downloader
         # middleware.
 
@@ -88,7 +87,6 @@ class QqvDownloaderMiddleware:
         return None
 
     def process_response(self, request, response, spider):
-
         # Called with the response returned from the downloader.
 
         # Must either;
@@ -121,7 +119,7 @@ class ProxyMiddleware(object):
         self.p = Proxy()
         ip, id = self.p.get_proxy(1)
         if ip:
-            self.ip=ip
+            self.ip = ip
             self.ip_id = id
         else:
             self.p.save_proxy(10)
@@ -146,13 +144,11 @@ class ProxyMiddleware(object):
 
     def process_response(self, request, response, spider):
 
-        if response.status in [404,500,503] :
-
+        if response.status in [404, 500, 503]:
             self.p.delete_proxy(self.ip_id)
             return request
 
         if request.url.endswith('403.htm'):
-
             self.p.delete_proxy(self.ip_id)
 
         return response
@@ -173,12 +169,16 @@ class Save:
             password=DATABASE.get('password'),
             db=DATABASE.get('db'),
             charset=DATABASE.get('charset'),
-            )
+        )
         self.curs = self.conn.cursor()
 
-
     def log(self, mes):
-        with open('../../aqyi.log', 'a') as f:
+        file = 'qq_m.log'
+        file_dir = os.getcwd() + '/runtime/'
+        self.video_mkdir(file_dir)
+
+        file = str(file_dir) + str(file)
+        with open(file, 'a') as f:
             f.write(mes)
             f.write('\n')
 
@@ -186,6 +186,26 @@ class Save:
         self.curs.execute(sql)
         self.log(sql)
         return self.curs, self.conn
+
+    # 创建文件夹
+    def video_mkdir(self, path):
+        # 去除首位空格
+        path = path.strip()
+        # 去除尾部 \ 符号
+        path = path.rstrip("\\")
+        # 判断路径是否存在
+        # 存在     True
+        # 不存在   False
+        isExists = os.path.exists(path)
+        # 判断结果
+        if not isExists:
+            # 如果不存在则创建目录
+            # 创建目录操作函数
+            os.makedirs(path)
+            return True
+        else:
+            # 如果目录存在则不创建，并提示目录已存在
+            return False
 
     def insert(self, dic, table):
         k = list(dic.keys())
@@ -349,23 +369,23 @@ class Proxy:
             proxyData = res.text
             if proxyData and self.typeof(proxyData) == 'str':
                 proxyData = self.str_to_json(proxyData)
-                if proxyData['code'] == 0:        # 成功获取数据
+                if proxyData['code'] == 0:  # 成功获取数据
                     for pIndex in range(len(proxyData['data'])):
-                        pInstall = {}             # 插入数据
+                        pInstall = {}  # 插入数据
                         pStr = proxyData['data'][pIndex]
                         pInstall['ip'] = str(pStr['ip']).strip()
                         pInstall['port'] = str(pStr['port']).strip()
                         # pInstall['city'] = str(pStr['city']).strip()
                         # pInstall['isp'] = str(pStr['isp']).strip()
                         pInstall['expire_time'] = str(pStr['expire_time']).strip()
-                        pInstall['type'] = 1      # 芝麻
-                        pInstall['state'] = 1     # ok
+                        pInstall['type'] = 1  # 芝麻
+                        pInstall['state'] = 1  # ok
                         proxies.append(pInstall)
         # # 拼接
         # for proxiesIndex in range(len(proxies)):
         #     proxiesStr = proxies[proxiesIndex]
-            # proxies[proxiesIndex]['proxy_https'] = 'https://' + str(proxiesStr['ip']) + ':' + str(proxiesStr['port'])
-            # proxies[proxiesIndex]['proxy_http'] = 'http://' + str(proxiesStr['ip']) + ':' + str(proxiesStr['port'])
+        # proxies[proxiesIndex]['proxy_https'] = 'https://' + str(proxiesStr['ip']) + ':' + str(proxiesStr['port'])
+        # proxies[proxiesIndex]['proxy_http'] = 'http://' + str(proxiesStr['ip']) + ':' + str(proxiesStr['port'])
         print(proxies)
         s = self.save.save(proxies, self.table)
         return proxies
