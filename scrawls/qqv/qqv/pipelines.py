@@ -1,56 +1,36 @@
 # coding: utf8
 import pymysql
-import os
 
 from qqv.items import Tx_vod, Tx_vod_collection
+
+from qqv.settings import DATABASE
 
 
 class Save:
     def __init__(self):
-        # 测试
         # self.conn = pymysql.connect(host='192.168.1.216',
         #                             port=3306,
         #                             user='cjzcg',
         #                             password='tceng^7Iu96ytes',
         #                             db='tcengvod', charset='utf8', )
-
-        # 正式
-        self.conn = pymysql.connect(host='rm-j6co0332808hbxpcwpo.mysql.rds.aliyuncs.com',
-                                    port=3306,
-                                    user='uservide',
-                                    password='CHjduTY793CKLp',
-                                    db='video', charset='utf8mb4', )
+        self.conn = pymysql.connect(
+            host=DATABASE.get('host'),
+            port=DATABASE.get('port'),
+            user=DATABASE.get('user'),
+            password=DATABASE.get('password'),
+            db=DATABASE.get('db'),
+            charset=DATABASE.get('charset'),
+            )
         self.curs = self.conn.cursor()
 
-    def log(self, mes, file='qq.log', dic='{}'):
-        file_dir = os.getcwd() + '/runtime/'
-        self.video_mkdir(file_dir)
-        file = str(file_dir) + str(file)
+    def log(self, mes, file='aqyi.log', dic='{}'):
         with open(file, 'a', encoding='utf8') as f:
+            if mes == None:
+                mes = ''
             f.write(mes)
             f.write('\n')
             f.write(dic)
             f.write('\n')
-
-    # 创建文件夹
-    def video_mkdir(self, path):
-        # 去除首位空格
-        path = path.strip()
-        # 去除尾部 \ 符号
-        path = path.rstrip("\\")
-        # 判断路径是否存在
-        # 存在     True
-        # 不存在   False
-        isExists = os.path.exists(path)
-        # 判断结果
-        if not isExists:
-            # 如果不存在则创建目录
-            # 创建目录操作函数
-            os.makedirs(path)
-            return True
-        else:
-            # 如果目录存在则不创建，并提示目录已存在
-            return False
 
     def query(self, sql, dic='{}'):
         try:
@@ -61,6 +41,7 @@ class Save:
             mes = 'error>>>>>>>' + sql
             self.log(mes, 'error.sql', dic)
         return None, None
+
 
     def insert(self, dic, table):
         k = list(dic.keys())
@@ -196,6 +177,12 @@ class QqvPipeline:
 
         elif isinstance(item, Tx_vod_collection):
             sav = item.__dict__.get('_values')
+            collection = sav.get('collection')
+            try:
+                if int(collection) == 31:
+                    print(sav.get('vod_name') + '>>>' + collection + '>>>' + sav.get('collection_url'))
+            except Exception:
+                pass
             vod_tx_albumId = sav.pop('vod_tx_albumId')
             save = Save()
             sql = f'select id from tx_vod where vod_tx_albumId="{vod_tx_albumId}"'

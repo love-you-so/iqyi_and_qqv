@@ -230,7 +230,6 @@ class DmozSpider(scrapy.spiders.Spider):
                 collctlast_id = video_ids[30 * i]
 
                 url = f'https://v.qq.com/x/cover/{vod_tx_albumId}/{collctlast_id}.html'
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'+url)
                 yield Request(url=url, callback=self.collect_list, dont_filter=True,
                               meta={'tx_item': tx_item, 'firstcoolects': 0})
 
@@ -294,16 +293,17 @@ class DmozSpider(scrapy.spiders.Spider):
         print(response.url + str(len(areas)))
         areas = html.xpath('//div[@class="video_tags _video_tags"]/span/text()')
         try:
-            area = areas[0]
-        except IndexError:
-            areas = html.xpath('//div[@class="video_tags _video_tags"]/span/text()')
+            vod_area = areas[0].strip()
             try:
-                area = areas[0]
-            except IndexError:
-                area = ''
-        print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' + area)
+                area = int(vod_area)
+                areas = html.xpath('//div[@class="video_tags _video_tags"]/a/text()')
+                vod_area = areas[0].strip()
+            except Exception:
+                vod_area = ''
+        except IndexError:
+            vod_area = ''
 
-
+        tx_item['vod_area'] = vod_area
         yield tx_item
         if collects_spans:
             for collects_span in collects_spans:

@@ -52,6 +52,7 @@ ROBOTSTXT_OBEY = False
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
    'qqv.middlewares.QqvDownloaderMiddleware': 543,
+   'qqv.middlewares.ProxyMiddleware': 542,
 }
 
 # Enable or disable extensions
@@ -87,3 +88,20 @@ ITEM_PIPELINES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 LOG_LEVEL = 'ERROR'          # 日志级别
+
+
+DATABASE = dict(
+   host='192.168.1.216',
+   port=3306,
+   user='cjzcg',
+   password='tceng^7Iu96ytes',
+   db='tcengvod', charset='utf8',)
+
+
+
+
+
+
+
+
+
