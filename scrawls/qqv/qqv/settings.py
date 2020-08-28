@@ -90,12 +90,21 @@ ITEM_PIPELINES = {
 LOG_LEVEL = 'ERROR'          # 日志级别
 
 
+# DATABASE = dict(
+#    host='192.168.1.216',
+#    port=3306,
+#    user='cjzcg',
+#    password='tceng^7Iu96ytes',
+#    db='tcengvod', charset='utf8',)
+
+
+
 DATABASE = dict(
-   host='192.168.1.216',
+   host='rm-j6co0332808hbxpcwpo.mysql.rds.aliyuncs.com',
    port=3306,
-   user='cjzcg',
-   password='tceng^7Iu96ytes',
-   db='tcengvod', charset='utf8',)
+   user='uservide',
+   password='CHjduTY793CKLp',
+   db='video', charset='utf8mb4',)
 
 
 
