@@ -5,17 +5,17 @@ import os
 class Save:
     def __init__(self):
         # 测试库
-        # self.conn = pymysql.connect(host='192.168.1.216',
-        #                             port=3306,
-        #                             user='cjzcg',
-        #                             password='tceng^7Iu96ytes',
-        #                             db='tcengvod', charset='utf8', )
-        # 正式
-        self.conn = pymysql.connect(host='rm-j6co0332808hbxpcwpo.mysql.rds.aliyuncs.com',
+        self.conn = pymysql.connect(host='192.168.1.216',
                                     port=3306,
-                                    user='uservide',
-                                    password='CHjduTY793CKLp',
-                                    db='video', charset='utf8mb4', )
+                                    user='cjzcg',
+                                    password='tceng^7Iu96ytes',
+                                    db='tcengvod', charset='utf8', )
+        # 正式
+        # self.conn = pymysql.connect(host='rm-j6co0332808hbxpcwpo.mysql.rds.aliyuncs.com',
+        #                             port=3306,
+        #                             user='uservide',
+        #                             password='CHjduTY793CKLp',
+        #                             db='video', charset='utf8mb4', )
 
         self.curs = self.conn.cursor()
 

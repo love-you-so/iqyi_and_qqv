@@ -54,41 +54,13 @@ channel_ids = {
     '5': {'channel_id': 25, 'three_category_id': {'0': ''}},
 }
 
-if __name__ == '__main__':
-
-    url = 'https://pcw-api.iqiyi.com/search/recommend/list?channel_id=1&data_type=1&mode=24&page_id=1&ret_num=48&three_category_id=8'
 
 
-    '''
-    albumId: 6857415019905501
-    categories: ["内地", "都市", "普通话"]
-    channelId: 2
-    description: "该剧以逗趣夫妻的婚后生活为主线，讲述了奶爸赵阳光联合岳母，与妻子白灿烂斗智斗法的故事。"
-    exclusive: 0
-    focus: "宋佳袁弘因娃开战"
-    imageUrl: "http://pic7.iqiyipic.com/image/20200811/bd/06/a_100418311_m_601_m7.jpg"
-    isAdvance: false
-    latestOrder: 4
-    name: "生活像阳光一样灿烂"
-    payMark: 1
-    payMarkUrl: "http://pic0.iqiyipic.com/common/20171106/ac/1b/vip_100000_v_601.png"
-    people: {,…}
-        main_charactor: [{id: 215344405, name: "宋佳"}, {id: 214697405, name: "袁弘"}, {id: 215241805, name: "刘芸"}]
-    1: {id: 214697405, name: "袁弘"}
-    2: {id: 215241805, name: "刘芸"}
-    period: "2020-08-10"
-    pingback: {doc_id: 6857415019905501}
-    playUrl: "http://www.iqiyi.com/v_yxilco1zho.html"
-    qiyiProduced: 0
-    score: 7.9
-    sourceId: 0
-    title: "生活像阳光一样灿烂"
-    videoCount: 40
-    '''
-
-
-
-
+starts = {  # 爬取过滤      three_category_id中值的部分： 页码
+    '7': 0,
+    '8': 0,
+    '6': 5
+}
 
 
 

@@ -18,12 +18,5 @@ channel_ids = {
 }
 
 
-clannel_vod_pid = {
-
-
-
-
-}
-
 
 

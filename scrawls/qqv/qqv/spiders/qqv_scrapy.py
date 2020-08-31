@@ -19,14 +19,28 @@ class DmozSpider(scrapy.spiders.Spider):
         '1': {'channel': 'movie',
               'itype': {'7': 100004, '8': 100005, '6': 100061, '9': 100012, '10': 100007, '12': 100006, '11': 100018},
               'iarea': {'内地': 100004, '中国香港': 100025, '美国': 100029, '欧洲': 100032, '中国台湾': 100026, '日本': 100027,
-                        '韩国': 100028, '印度': 100030, '泰国':100031, '法国':16, '英国': 15, '德国':17,'意大利':20,
-                        '澳大利亚':21,'北欧':22, '拉丁美洲':23,'其他':100033}
+                        '韩国': 100028, '印度': 100030, '泰国': 100031, '法国':16, '英国': 15, '德国':17,'意大利':20,
+                        '澳大利亚': 21, '北欧': 22, '拉丁美洲': 23, '其他': 100033}
               },
         '2': {'channel': 'tv', 'iarea': {'13': 814, '14': [14, 817], '15': [10, 818], '16': [815, 816], '24': 9}},
         '23': {'channel': 'doco', 'itrailer': {'0': -1}},
         '4': {'channel': 'cartoon', 'iarea': {'19': 1, '20': 2, '22': 3}},
         '3': {'channel': 'variety', 'iarea': {'25': 1, '28': 2}},  # 国内和海外
-        '5': {'channel': 25},
+        # '5': {'channel': 25},
+    }
+
+    # starts 格式
+    # starts = {
+    #         '1': [{'itype': 100004, 'iarea': 100004, 'offset': 120}],
+    #         '2': [{'iarea': 814, 'offset': 30}],
+    #         '23': [{'itrailer': -1, 'offset': 30}],
+    #         '3': [{'iarea': 1, 'offset': 30}],
+    # }
+    starts = {
+        '1': [{'itype': 100004, 'iarea': 100004, 'offset': 120}, {'itype': 100005, 'iarea': 100004, 'offset': 120}],
+        '2': [{'iarea': 814, 'offset': 30}],
+        '23': [{'itrailer': -1, 'offset': 30}],
+        '3': [{'iarea': 1, 'offset': 30}],
     }
 
     def parse(self, response):
@@ -34,7 +48,7 @@ class DmozSpider(scrapy.spiders.Spider):
         for type_pid, v in self.channel_ids.items():
             urls = []
             # if type_pid in ['1', '2', '23', '4', '']:
-            if type_pid in ['1']:
+            if type_pid in []:
                 continue
             channel = v.get('channel')
             iarea = v.get('iarea')
@@ -72,13 +86,48 @@ class DmozSpider(scrapy.spiders.Spider):
                 yield Request(url.get('url'), self.next_pages, dont_filter=True, meta={'type_id':url.get('type_id'), 'type_pid':type_pid})
                 return
 
+    def get_area(self, url):
+        try:
+            iarea = re.findall('rarea=\d+', url)[0].split('=')[1]
+        except Exception as e:
+            iarea = 0
+        try:
+            itrailer = re.findall('itrailer=\d+', url)[0].split('=')[1]
+        except Exception as e:
+            itrailer = 0
+        try:
+            itype = re.findall('itype=\d+', url)[0].split('=')[1]
+        except Exception as e:
+            itype = 0
+        return itype, iarea, itrailer
+
     def next_pages(self, response):
         type_pid = response.meta.get('type_pid')
         type_id = response.meta.get('type_id')
         html = etree.HTML(response.text)
         pages = html.xpath('//div[@class="mod_pages"]/button/@data-offset')
         url = response.url
+        itype, iarea, itrailer = self.get_area(url)
+        ls = self.starts.get(type_pid, [])
+        offset = 0
+        for i in ls:
+            itype1 = i.get('itype', 0)
+            iarea1 = i.get('iarea', 0)
+            itrailer1 = i.get('itrailer', 0)
+            print(str(itype) == str(itype1) and str(iarea) == str(iarea1) and str(itrailer) == str(itrailer1))
+            if str(itype) == str(itype1) and str(iarea) == str(iarea1) and str(itrailer) == str(itrailer1):
+                offset = i.get('offset', 0)
+
+        if offset == -1:
+            return
+
         for page in pages[1: -1]:
+            if int(page) < offset:
+                continue
+            with open('qqv_record.log', 'a') as f:
+                s = str(type_id) + '-->' + str(itype) + '-->' + str(iarea) + '-->' + str(itrailer) + '-->' + str(page) + '\n'
+                f.write(s)
+
             next_url = url.split('offset=')[0] + f'offset={str(page)}' + url.split('offset=')[1][1:]
             yield Request(next_url, self.parse_page, dont_filter=True,
                     meta={'type_id': type_id, 'type_pid': type_pid})
@@ -91,8 +140,8 @@ class DmozSpider(scrapy.spiders.Spider):
         for div in divs:
             vod_name = div.xpath('a/@title')[0]                # 视频名称
             vod_tx_albumId = div.xpath('a/@data-float')[0]     # 视频唯一id
-            url = div.xpath('a/@href')                         # 视频地址
-            vod_pic = 'http:' + div.xpath('a/img/@src')[0]   # 视频图片
+            # url = div.xpath('a/@href')                         # 视频地址
+            vod_pic = 'http:' + div.xpath('a/img/@src')[0]     # 视频图片
 
             mark = div.xpath('a/img')
             if len(mark) <= 1:

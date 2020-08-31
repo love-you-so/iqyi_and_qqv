@@ -10,7 +10,7 @@ import traceback
 # from iqyi.mian_db import Save
 from tools.mian_db import Save
 from tools.proxy import Proxy
-from settings import channel_ids, headers
+from settings import channel_ids, headers, starts
 DEBUG = False  # 是否抛出异常  ，为了保证出现异常时不使整个程序停止
 
 
@@ -57,30 +57,55 @@ class Crawl:
 
         return response
 
+    def get_page(self, three_category_id):
+        page = starts.get(str(three_category_id), 1)
+
+        with open('record.log', 'a') as f:
+            s = str(three_category_id) + '-->' + str(page) + '\n'
+            f.write(s)
+        return page
+
     def parse(self, mode=24):
         for type_pid, v in channel_ids.items():
             if type_pid in ['']:
                 continue
             channel_id = v.get('channel_id')
             three_category_ids = v.get('three_category_id')
-            url = f'https://pcw-api.iqiyi.com/search/recommend/list?channel_id={channel_id}&data_type=1&mode={mode}&page_id=1&ret_num=48'
+            # url = f'https://pcw-api.iqiyi.com/search/recommend/list?channel_id={channel_id}&data_type=1&mode={mode}&page_id=1&ret_num=48'
 
             if three_category_ids:
                 for type_id, three_category_id in three_category_ids.items():
+
                     if isinstance(three_category_id, int):
+                        page = self.get_page(three_category_id)  # 根据条件过滤是否爬取和从哪一页爬取， 如果为0则不爬取
+                        print('--------', three_category_id, page)
+                        if page == 0:
+                            continue
+                        else:
+                            url = f'https://pcw-api.iqiyi.com/search/recommend/list?channel_id={channel_id}&data_type=1&mode={mode}&page_id={page}&ret_num=48'
                         url = url + '&three_category_id=%s' % three_category_id
-                        for dic, albumId, playUrl in self.parse1(url, type_pid, type_id):
+                        for dic, albumId, playUrl in self.parse1(url, type_pid, type_id, three_category_id):
                             yield dic, albumId, playUrl, type_pid
                     elif isinstance(three_category_id, list):
                         for i in three_category_id:
+                            page = self.get_page(three_category_id)
+                            if page == 0:
+                                continue
+                            else:
+                                url = f'https://pcw-api.iqiyi.com/search/recommend/list?channel_id={channel_id}&data_type=1&mode={mode}&page_id={page}&ret_num=48'
                             url = url + '&three_category_id=%s' % i
-                            for dic, albumId, playUrl in self.parse1(url, type_pid, type_id):
+                            for dic, albumId, playUrl in self.parse1(url, type_pid, type_id, three_category_id):
                                 yield dic, albumId, playUrl, type_pid
                     elif isinstance(three_category_id, str):
-                        for dic, albumId, playUrl in self.parse1(url, type_pid, type_id):
+                        page = self.get_page(three_category_id)
+                        if page == 0:
+                            continue
+                        else:
+                            url = f'https://pcw-api.iqiyi.com/search/recommend/list?channel_id={channel_id}&data_type=1&mode={mode}&page_id={page}&ret_num=48'
+                        for dic, albumId, playUrl in self.parse1(url, type_pid, type_id, three_category_id):
                             yield dic, albumId, playUrl, type_pid
 
-    def parse1(self, url, type_pid, type_id):
+    def parse1(self, url, type_pid, type_id, three_category_id):
         print('>>>>', url, type_pid, type_id)
         try:
             response = json.loads(self.crawl(url=url).text).get('data')
@@ -88,7 +113,7 @@ class Crawl:
         except Exception as e:
             debug(e)
             response = {}
-        print('<><><<><',response)
+
         has_next = response.get('has_next', 0)  # 是否有下一页
         lists = response.get('list', [])   # 视频信息列表（一页中的所有视频）
         type_dic = {'type_pid': type_pid, 'type_id': type_id}
@@ -102,9 +127,12 @@ class Crawl:
 
         if has_next:  # 如果有下一页, 递归爬取下一页
             page = int(re.findall('\d+', re.findall(r'page_id=\d+&', url)[0])[0]) + 1
+            with open('record.log', 'a') as f:
+                s = str(three_category_id) + '-->' + str(page) + '\n'
+                f.write(s)
             url = re.split(r'page_id=\d+&', url)
             url = url[0] + f'page_id={page}&' + url[1]
-            for dic, albumId, playUrl in self.parse1(url, type_pid, type_id):
+            for dic, albumId, playUrl in self.parse1(url, type_pid, type_id, three_category_id):
                 yield dic, albumId, playUrl
 
     def _album(self, album):
@@ -113,46 +141,7 @@ class Crawl:
         :param album:
         :return:
         '''
-        # vod_name = album.get('name')   # 视频标题
-        # vod_sub = album.get('')   # 视频副标题  !
-        # vod_en = album.get('')   # 视频别名
-        # vod_tag = album.get('')  # 视频标签
-        # vod_pic = album.get('imageUrl')  # 视频图片
-        # vod_pic_thumb = album.get('')  # 视频缩略图
-        # vod_pic_slide = album.get('')  # 视频海报图
-        # vod_actors = album.get('people').get('main_charactor')
-        # vod_actor = ''          # 主演列表
-        # for i in vod_actors:
-        #     vod_actor += i.get('name')
-        #     vod_actor += ';'
 
-        # vod_director = album.get('')   # 导演
-        # vod_writer = album.get('')   # 编剧
-        # vod_behind = album.get('')   # 幕后
-        # vod_blurb = album.get('description')    # 简介
-        # vod_remarks = album.get('')  # 备注
-        # vod_pubdate = album.get('')  # 上映日期
-        # vod_total = album.get('videoCount')  # 总集数
-        # vod_serial = album.get('latestOrder')  # 连载数
-        # vod_tv = album.get('')  # 电视频道
-        # vod_weekday = album.get('')   # 节目周期
-        # vod_area = album.get('')   # 发行地区
-        # vod_lang = album.get('')   # 对白语言
-        # vod_year = album.get('')   # 上映年代
-        # vod_version = album.get('')  # 影片版本
-        # vod_state = album.get('')  # 资源类别 如：正片,预告片
-        # vod_duration = album.get('duration')  # 时长
-
-        # if vod_total == vod_serial:
-        #     vod_isend = 1  # 是否完结
-        # else:
-        #     vod_isend = 0  # 是否完结
-
-        # vod_time_add = album.get('')  # 添加时间
-        # vod_time_up = album.get('')   # 更新时间
-        # vod_is_from = 2   # 来源 0:默认未标识来源  1:腾讯视频 2 爱奇艺 3 优酷 4 豆瓣 5bibi 6 芒果tv
-        # vod_is_advance = album.get('isAdvance')  # 是否超前点播
-        # vod_is_pay_mark = album.get('payMark')  # 是否为vip
         vod_douban_albumId = album.get('')   # 目标视频关键id
         vod_tx_albumId = album.get('')   # 目标视频关键id
         vod_iqiyi_albumId = album.get('albumId')   # 目标视频关键id
@@ -485,5 +474,4 @@ if __name__ == '__main__':
         mode = sys.argv[1]
     except IndexError:
         mode = 24
-    print(mode)
     main(mode=mode)
