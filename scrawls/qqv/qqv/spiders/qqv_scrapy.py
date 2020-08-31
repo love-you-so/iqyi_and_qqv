@@ -29,7 +29,7 @@ class DmozSpider(scrapy.spiders.Spider):
         # '5': {'channel': 25},
     }
 
-    # starts 格式
+    # starts 格式， 配置不需要爬取的项目的offset   offsize 为30
     # starts = {
     #         '1': [{'itype': 100004, 'iarea': 100004, 'offset': 120}],
     #         '2': [{'iarea': 814, 'offset': 30}],
@@ -37,10 +37,7 @@ class DmozSpider(scrapy.spiders.Spider):
     #         '3': [{'iarea': 1, 'offset': 30}],
     # }
     starts = {
-        '1': [{'itype': 100004, 'iarea': 100004, 'offset': 120}, {'itype': 100005, 'iarea': 100004, 'offset': 120}],
-        '2': [{'iarea': 814, 'offset': 30}],
-        '23': [{'itrailer': -1, 'offset': 30}],
-        '3': [{'iarea': 1, 'offset': 30}],
+
     }
 
     def parse(self, response):
