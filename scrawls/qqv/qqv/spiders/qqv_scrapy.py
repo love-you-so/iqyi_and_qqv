@@ -29,7 +29,7 @@ class DmozSpider(scrapy.spiders.Spider):
         # '5': {'channel': 25},
     }
 
-    # starts 格式， 配置不需要爬取的项目的offset   offsize 为30
+    # starts 格式， 配置不需要爬取的项目的offset  offset 为-1代表过滤掉 offsize 为30
     # starts = {
     #         '1': [{'itype': 100004, 'iarea': 100004, 'offset': 120}],
     #         '2': [{'iarea': 814, 'offset': 30}],
@@ -221,7 +221,7 @@ class DmozSpider(scrapy.spiders.Spider):
         vod_remarks = ''                # 备注
         vod_pubdate = ''                # 上映日期
         video_ids = jjson.get('c', {}).get('video_ids', [])
-        vod_total = len(video_ids)    # 总集数
+        vod_total = len(video_ids)      # 总集数
         vod_is_from = 1                 # 视频来源
         vod_time_add = int(time.time())      # 添加时间
         vod_time_up = int(time.time())       # 更新时间
@@ -296,7 +296,6 @@ class DmozSpider(scrapy.spiders.Spider):
         collects_spans = html.xpath('//div[@class="mod_episode"]/span')
 
         vod_tx_albumId = tx_item['vod_tx_albumId']
-
 
         if not collects_spans:
             collects = html.xpath('//div[@class="mod_figure mod_figure_list mod_figure_list_sm" and @_wind="columnname=选集"]/ul[@class="figure_list"]/li')

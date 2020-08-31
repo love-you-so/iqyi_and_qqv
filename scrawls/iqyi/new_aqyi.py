@@ -78,7 +78,6 @@ class Crawl:
 
                     if isinstance(three_category_id, int):
                         page = self.get_page(three_category_id)  # 根据条件过滤是否爬取和从哪一页爬取， 如果为0则不爬取
-                        print('--------', three_category_id, page)
                         if page == 0:
                             continue
                         else:
@@ -106,7 +105,6 @@ class Crawl:
                             yield dic, albumId, playUrl, type_pid
 
     def parse1(self, url, type_pid, type_id, three_category_id):
-        print('>>>>', url, type_pid, type_id)
         try:
             response = json.loads(self.crawl(url=url).text).get('data')
 

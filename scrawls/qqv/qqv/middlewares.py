@@ -185,7 +185,7 @@ class Save:
 
     def query(self, sql):
         self.curs.execute(sql)
-        self.log(sql)
+        # self.log(sql)
         return self.curs, self.conn
 
     # 创建文件夹
