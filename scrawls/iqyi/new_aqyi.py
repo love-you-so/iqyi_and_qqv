@@ -40,14 +40,14 @@ class Crawl:
 
         i = 0
         response = None
-        while i<10:  # 如果下载失败重试三次
+        while i<11:  # 如果下载失败重试三次
             ip, id = self.proxy()
 
             try:
                 if header:
-                    response = requests.get(url=url, headers=headers, proxies={'https': ip})
+                    response = requests.get(url=url, headers=headers, proxies={'https': ip}, timeout=5)
                 else:
-                    response = requests.get(url=url, proxies={'https': ip})
+                    response = requests.get(url=url, proxies={'https': ip}, timeout=5)
                 break
             except Exception as e:
                 debug(e)

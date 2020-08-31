@@ -107,7 +107,7 @@ DATABASE = dict(
 #    db='video', charset='utf8mb4',)
 
 
-
+DOWNLOAD_TIMEOUT = 20
 
 
 
