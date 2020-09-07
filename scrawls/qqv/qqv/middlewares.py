@@ -14,6 +14,8 @@ import pymysql
 from itemadapter import is_item, ItemAdapter
 
 from qqv.settings import DATABASE
+from scrapy.http import Response, HtmlResponse
+from selenium import webdriver
 
 
 class QqvSpiderMiddleware:
@@ -76,6 +78,8 @@ class QqvDownloaderMiddleware:
         return s
 
     def process_request(self, request, spider):
+        if request.url == 'http://v.qq.com/error.html':
+            return Response(url=request.url, status=200)
         # Called for each request that goes through the downloader
         # middleware.
 
@@ -97,6 +101,7 @@ class QqvDownloaderMiddleware:
         return response
 
     def process_exception(self, request, exception, spider):
+        print('error >>>>' + request.url)
         # Called when a download handler or a process_request()
         # (from other downloader middleware) raises an exception.
 
@@ -132,13 +137,19 @@ class ProxyMiddleware(object):
         return s
 
     def process_request(self, request, spider):
+        if spider.name in ['mango']:
+            return
         self.proxy()
         print('使用代理ip：' + str(self.ip))
+        with open('usered_ip', 'a') as f:
+            f.write(self.ip)
+            f.write('\n')
         request.meta['proxy'] = self.ip
 
         pass
 
     def process_exception(self, request, exception, spider):
+        raise exception
 
         self.p.delete_proxy(self.ip_id)
         return request
@@ -398,7 +409,8 @@ class Proxy:
         curs, conn = self.save.query(sql)
         try:
             ip, port, id = curs.fetchone()
-            return 'https://' + ip + ':' + port, id
+            # return 'https://' + ip + ':' + port, id
+            return 'http://' + ip + ':' + port, id
         except TypeError:
             return None, None
 
@@ -406,3 +418,34 @@ class Proxy:
         sql = f'delete from {self.table} where id={id}'
         cursql, conn = self.save.query(sql)
         conn.commit()
+
+
+class SeleniumMiddleware():
+
+    def __init__(self, options):
+
+        self.options = options
+        self.options.add_argument('--headless')
+        self.options.add_argument('--disable-gpu')
+        self.browser = webdriver.Chrome(options=self.options)
+
+    @classmethod
+    def from_crawler(cls, crawler):
+
+        options = webdriver.ChromeOptions()
+        options.add_argument('log-level=3')
+
+        return cls(options=options)
+
+    def process_request(self, request, spider):
+        #
+        if spider.name == 'mango' and request.meta.get('selenium'):
+            url = request.url
+
+            self.browser.get(url=url)
+            html_text = self.browser.page_source
+
+            return HtmlResponse(url=url, body=html_text, request=request, encoding='utf-8',
+                                status=200)
+        else:
+            pass

@@ -42,6 +42,7 @@ class Tx_vod(scrapy.Item):
      vod_is_pay_mark = scrapy.Field()  # 是否 vip 0 否 1是 ,
      vod_douban_albumId = scrapy.Field()    # 目标站视频关键ID 类似豆瓣ID ,
      vod_tx_albumId = scrapy.Field()    # 目标站视频关键ID 类似豆瓣ID ,
+     vod_mango_albumId = scrapy.Field()    # 目标站视频关键ID 类似豆瓣ID ,
      vod_iqiyi_albumId = scrapy.Field()    # 目标站视频关键ID 类似豆瓣ID ,
      vod_yk_albumId = scrapy.Field()    # 目标站视频关键ID 类似豆瓣ID ,
      vod_status = scrapy.Field()  # 视频状态 0等待自动检测 1 正常 2 下线 ,

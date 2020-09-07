@@ -19,13 +19,24 @@ class Save:
 
         self.curs = self.conn.cursor()
 
-    def log(self, mes):
-        file = "aqyi.log"
+    # def log(self, mes):
+    #     file = "aqyi.log"
+    #     file_dir = os.getcwd() + '/runtime/'
+    #     self.video_mkdir(file_dir)
+    #     file = str(file_dir) + str(file)
+    #     with open(file, 'a') as f:
+    #         f.write(mes)
+    #         f.write('\n')
+    def log(self, mes, file='aqyi.log', error=''):
         file_dir = os.getcwd() + '/runtime/'
         self.video_mkdir(file_dir)
         file = str(file_dir) + str(file)
-        with open(file, 'a') as f:
+        with open(file, 'a', encoding='utf8') as f:
+            if mes == None:
+                mes = ''
             f.write(mes)
+            f.write('\n')
+            f.write(error)
             f.write('\n')
 
     # 创建文件夹
@@ -48,10 +59,19 @@ class Save:
             # 如果目录存在则不创建，并提示目录已存在
             return False
 
+    # def query(self, sql):
+    #     self.log(sql)
+    #     self.curs.execute(sql)
+    #     return self.curs, self.conn
     def query(self, sql):
-        self.curs.execute(sql)
-        self.log(sql)
-        return self.curs, self.conn
+        try:
+            self.curs.execute(sql)
+            self.log(sql)
+            return self.curs, self.conn
+        except Exception as e:
+            mes = 'error>>>>>>>' + sql
+            self.log(mes, 'error.sql', str(e))
+        return None, None
 
     def insert(self, dic, table):
         k = list(dic.keys())
@@ -154,7 +174,7 @@ class Save:
                 n_sql = self.insertall(dic, table)
             else:
                 return
-        print(n_sql)
+
         self.query(sql=n_sql)
         # 查找本次操作的id
         try:

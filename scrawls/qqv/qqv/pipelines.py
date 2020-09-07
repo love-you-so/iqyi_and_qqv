@@ -15,6 +15,7 @@ class Save:
         #                             user='cjzcg',
         #                             password='tceng^7Iu96ytes',
         #                             db='tcengvod', charset='utf8', )
+        self.host = DATABASE.get('host')
         self.conn = pymysql.connect(
             host=DATABASE.get('host'),
             port=DATABASE.get('port'),
@@ -142,7 +143,8 @@ class Save:
                 n_sql = self.insertall(dic, table)
             else:
                 return
-        print('save %s' % dic.get('vod_name'))
+        print(n_sql[:15])
+        print('save %s in %s' % (dic.get('vod_name'), self.host))
         self.query(sql=n_sql)
         # 查找本次操作的id
         try:
@@ -150,7 +152,6 @@ class Save:
             self.query(sql=sql)
             id, vod_name = self.curs.fetchall()[0]
             return id, vod_name
-
         except Exception as e:
             return
         finally:
@@ -166,10 +167,17 @@ class QqvPipeline:
         if isinstance(item, Tx_vod):
             sav = item.__dict__.get('_values')
             albumId = sav.get('vod_tx_albumId')
+            if not albumId:
+                albumId = sav.get('vod_mango_albumId')
+            print(albumId)
             save = Save()
             vod_details = sav.pop('vod_details', {})  # 取出json
-            where = f'vod_iqiyi_albumId="{albumId}" or vod_douban_albumId="{albumId}" or vod_yk_albumId="{albumId}" or vod_tx_albumId="{albumId}"'
-            vod_id, vod_name = save.save(sav, 'tx_vod', where, 'vod_tx_albumId')
+            # where = f'vod_iqiyi_albumId="{albumId}" or vod_douban_albumId="{albumId}" or vod_yk_albumId="{albumId}" or vod_tx_albumId="{albumId}" or vod_mango_albumId = "{albumId}"'
+            where = f'vod_iqiyi_albumId="{albumId}" or vod_douban_albumId="{albumId}" or vod_yk_albumId="{albumId}" or vod_tx_albumId="{albumId}" or vod_mango_albumId = "{albumId}"'
+            if sav.get('vod_tx_albumId'):
+                vod_id, vod_name = save.save(sav, 'tx_vod', where, 'vod_tx_albumId')
+            elif sav.get('vod_mango_albumId'):
+                vod_id, vod_name = save.save(sav, 'tx_vod', where, 'vod_mango_albumId')
             if vod_details:
                 where = f'vod_id={vod_id}'
                 if isinstance(vod_details, dict):

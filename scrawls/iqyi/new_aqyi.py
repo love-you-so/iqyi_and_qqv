@@ -28,6 +28,9 @@ class Crawl:
         self.p = Proxy()
 
     def proxy(self):
+        '''
+        功能函数
+        '''
 
         ip, id = self.p.get_proxy(1)
         if ip:
@@ -37,17 +40,25 @@ class Crawl:
             return self.proxy()
 
     def crawl(self, url, header=1):
+        '''
+        功能函数
+        '''
 
         i = 0
         response = None
         while i<11:  # 如果下载失败重试三次
             ip, id = self.proxy()
+            with open('usered_ip', 'a') as f:
+                f.write(ip)
+                f.write('\n')
 
             try:
                 if header:
                     response = requests.get(url=url, headers=headers, proxies={'https': ip}, timeout=5)
+                    # response = requests.get(url=url, headers=headers, timeout=5)
                 else:
                     response = requests.get(url=url, proxies={'https': ip}, timeout=5)
+                    # response = requests.get(url=url, timeout=5)
                 break
             except Exception as e:
                 debug(e)
@@ -58,8 +69,10 @@ class Crawl:
         return response
 
     def get_page(self, three_category_id):
-        page = starts.get(str(three_category_id), 1)
-
+        '''
+        功能函数
+        '''
+        page = starts.get(int(three_category_id), 1)
         with open('record.log', 'a') as f:
             s = str(three_category_id) + '-->' + str(page) + '\n'
             f.write(s)
@@ -67,7 +80,7 @@ class Crawl:
 
     def parse(self, mode=24):
         for type_pid, v in channel_ids.items():
-            if type_pid in ['']:
+            if type_pid in ['', '2', '', '', '', '']:
                 continue
             channel_id = v.get('channel_id')
             three_category_ids = v.get('three_category_id')
@@ -87,13 +100,13 @@ class Crawl:
                             yield dic, albumId, playUrl, type_pid
                     elif isinstance(three_category_id, list):
                         for i in three_category_id:
-                            page = self.get_page(three_category_id)
+                            page = self.get_page(i)
                             if page == 0:
                                 continue
                             else:
                                 url = f'https://pcw-api.iqiyi.com/search/recommend/list?channel_id={channel_id}&data_type=1&mode={mode}&page_id={page}&ret_num=48'
                             url = url + '&three_category_id=%s' % i
-                            for dic, albumId, playUrl in self.parse1(url, type_pid, type_id, three_category_id):
+                            for dic, albumId, playUrl in self.parse1(url, type_pid, type_id, i):
                                 yield dic, albumId, playUrl, type_pid
                     elif isinstance(three_category_id, str):
                         page = self.get_page(three_category_id)
@@ -112,9 +125,19 @@ class Crawl:
             debug(e)
             response = {}
 
-        has_next = response.get('has_next', 0)  # 是否有下一页
+        has_next = response.get('has_next', 0)  # 是否有下一页(组多显示17页，所以不能根据has_next 判断是否有下一页)
         lists = response.get('list', [])   # 视频信息列表（一页中的所有视频）
+
+        if not lists:
+            return
+
         type_dic = {'type_pid': type_pid, 'type_id': type_id}
+
+        page = int(re.findall('\d+', re.findall(r'page_id=\d+&', url)[0])[0]) + 1
+        pages = self.get_page(three_category_id)
+        print('<><><>1111111111111111111111111111', pages, page)
+        if pages > page:
+            return
 
         for album in lists:
             albumId_dic, albumId, playUrl = self._album(album)
@@ -123,8 +146,10 @@ class Crawl:
             dic.update(type_dic)
             yield dic, albumId, playUrl
 
-        if has_next:  # 如果有下一页, 递归爬取下一页
-            page = int(re.findall('\d+', re.findall(r'page_id=\d+&', url)[0])[0]) + 1
+        # if has_next:  # 如果有下一页, 递归爬取下一页
+        if lists:
+
+
             with open('record.log', 'a') as f:
                 s = str(three_category_id) + '-->' + str(page) + '\n'
                 f.write(s)
@@ -135,6 +160,7 @@ class Crawl:
 
     def _album(self, album):
         '''
+        功能函数
         获取视频albumId  唯一标识
         :param album:
         :return:
@@ -441,15 +467,15 @@ def main(mode=24):
     mysqll = Save()
     try:
         for dic, albumId, playUrl, type_pid in c.parse(mode=mode):
-            where = f'vod_iqiyi_albumId={albumId} or vod_douban_albumId={albumId} or vod_yk_albumId={albumId} or vod_tx_albumId={albumId}'
+            where = f"vod_iqiyi_albumId='{albumId}' or vod_douban_albumId='{albumId}' or vod_yk_albumId='{albumId}' or vod_tx_albumId='{albumId}'"
             try:
                 vod_details = dic.pop('vod_details')
                 vod_id, vod_name = mysqll.save(dic, 'tx_vod',  where, 'vod_iqiyi_albumId',)
-                mysqll.save({'vod_id': vod_id, 'vod_details': vod_details}, table='tx_vod_json')
+                where = f'vod_id={vod_id}'
+                mysqll.save({'vod_id': vod_id, 'vod_details': vod_details}, table='tx_vod_json', where=where)
                 # collect_lis = c.collect(albumId=albumId, vod_id=vod_id, type_pid=type_pid, vod_name=vod_name)
-                collect_lis = []
+                continue
                 for collect_li in collect_lis:
-                    pprint.pprint(collect_li)
                     where = f'albumId={collect_li.get("albumId")}'
                     collection_details = collect_li.pop('collection_details')
                     collection_id, vod_name = mysqll.save(collect_li, 'tx_vod_collection', where, 'albumId',)

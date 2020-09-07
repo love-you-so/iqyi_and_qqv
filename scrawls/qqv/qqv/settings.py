@@ -52,7 +52,8 @@ ROBOTSTXT_OBEY = False
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
    'qqv.middlewares.QqvDownloaderMiddleware': 543,
-   'qqv.middlewares.ProxyMiddleware': 542,
+   'qqv.middlewares.ProxyMiddleware': 544,
+   'qqv.middlewares.SeleniumMiddleware': 545,
 }
 
 # Enable or disable extensions
@@ -97,8 +98,6 @@ DATABASE = dict(
    password='tceng^7Iu96ytes',
    db='tcengvod', charset='utf8',)
 
-
-
 # DATABASE = dict(
 #    host='rm-j6co0332808hbxpcwpo.mysql.rds.aliyuncs.com',
 #    port=3306,
@@ -107,7 +106,7 @@ DATABASE = dict(
 #    db='video', charset='utf8mb4',)
 
 
-DOWNLOAD_TIMEOUT = 20
+DOWNLOAD_TIMEOUT = 60
 
 
 

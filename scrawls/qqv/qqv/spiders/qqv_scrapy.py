@@ -37,15 +37,19 @@ class DmozSpider(scrapy.spiders.Spider):
     #         '3': [{'iarea': 1, 'offset': 30}],
     # }
     starts = {
-
+        '23': [{'itrailer': -1, 'offset': 30}],
+        '3': [{'iarea': 1, 'offset': 2040}],
+        '4': [{'iarea': 2, 'offset': 630}, {'iarea': 1, 'offset': 1110}, {'iarea': 90, 'offset': 1110}],
+        '19': [{'iarea': 1, 'offset': 1110}],
     }
 
     def parse(self, response):
 
         for type_pid, v in self.channel_ids.items():
             urls = []
-            # if type_pid in ['1', '2', '23', '4', '']:
-            if type_pid in []:
+            print(type_pid in ['1', '2', '', '', ''])
+            if type_pid in ['1', '2', '', '', '']:
+            # if type_pid in []:
                 continue
             channel = v.get('channel')
             iarea = v.get('iarea')
@@ -56,20 +60,37 @@ class DmozSpider(scrapy.spiders.Spider):
 
             if iarea:
                 for k, v in iarea.items():
-                    if channel in ['tv', 'cartoon', 'variety']:
-                        type_id = k
-                        url1 = url + '&rarea=' + str(v)
-                        urls.append({'url': url1, 'type_id': type_id})
-
-                    elif channel == 'movie':
-                        url1 = url + '&rarea=' + str(v)
-                        if itype:
-                            for k, v in itype.items():
+                    if isinstance(v, list):
+                        for i in v:
+                            if channel in ['tv', 'cartoon', 'variety']:
                                 type_id = k
-                                url2 = url1 + '&itype=' + str(v)
-                                urls.append({'url': url2, 'type_id': type_id})
+                                url1 = url + '&iarea=' + str(i)
+                                urls.append({'url': url1, 'type_id': type_id})
+
+                            elif channel == 'movie':
+                                url1 = url + '&iarea=' + str(i)
+                                if itype:
+                                    for k, v in itype.items():
+                                        type_id = k
+                                        url2 = url1 + '&itype=' + str(v)
+                                        urls.append({'url': url2, 'type_id': type_id})
+                            else:
+                                return
                     else:
-                        return
+                        if channel in ['tv', 'cartoon', 'variety']:
+                            type_id = k
+                            url1 = url + '&iarea=' + str(v)
+                            urls.append({'url': url1, 'type_id': type_id})
+
+                        elif channel == 'movie':
+                            url1 = url + '&iarea=' + str(v)
+                            if itype:
+                                for k, v in itype.items():
+                                    type_id = k
+                                    url2 = url1 + '&itype=' + str(v)
+                                    urls.append({'url': url2, 'type_id': type_id})
+                        else:
+                            return
 
             elif itrailer:
                 for k, v in itrailer.items():
@@ -81,15 +102,15 @@ class DmozSpider(scrapy.spiders.Spider):
 
             for url in urls:
                 yield Request(url.get('url'), self.next_pages, dont_filter=True, meta={'type_id':url.get('type_id'), 'type_pid':type_pid})
-                return
+
 
     def get_area(self, url):
         try:
-            iarea = re.findall('rarea=\d+', url)[0].split('=')[1]
+            iarea = re.findall('iarea=\d+', url)[0].split('=')[1]
         except Exception as e:
             iarea = 0
         try:
-            itrailer = re.findall('itrailer=\d+', url)[0].split('=')[1]
+            itrailer = re.findall('itrailer=-\d+', url)[0].split('=')[1]
         except Exception as e:
             itrailer = 0
         try:
@@ -111,7 +132,6 @@ class DmozSpider(scrapy.spiders.Spider):
             itype1 = i.get('itype', 0)
             iarea1 = i.get('iarea', 0)
             itrailer1 = i.get('itrailer', 0)
-            print(str(itype) == str(itype1) and str(iarea) == str(iarea1) and str(itrailer) == str(itrailer1))
             if str(itype) == str(itype1) and str(iarea) == str(iarea1) and str(itrailer) == str(itrailer1):
                 offset = i.get('offset', 0)
 
@@ -213,6 +233,10 @@ class DmozSpider(scrapy.spiders.Spider):
         else:
             vod_tag = ''
 
+        if isinstance(vod_tag, list):
+            vod_tag = ','.join(vod_tag)
+
+        vod_tag = vod_tag.replace("'", '')
         try:
             vod_blurb = jjson.get('c', {}).get('description').replace(r'\n', '').replace(r'\r', '').\
                 replace('\\"', '').replace("\'", '').replace("’", '').replace(r'\u', '').replace('\\', '')   # 简介
