@@ -69,4 +69,5 @@ class Tx_vod_collection(scrapy.Item):
      collection_time_up = scrapy.Field()
      collection_status = scrapy.Field()
      vod_tx_albumId = scrapy.Field()
+     vod_mango_albumId = scrapy.Field()
 

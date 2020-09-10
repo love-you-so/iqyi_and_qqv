@@ -47,22 +47,22 @@ class Crawl:
         i = 0
         response = None
         while i<11:  # 如果下载失败重试三次
-            ip, id = self.proxy()
-            with open('usered_ip', 'a') as f:
-                f.write(ip)
-                f.write('\n')
+            # ip, id = self.proxy()
+            # with open('usered_ip', 'a') as f:
+            #     f.write(ip)
+            #     f.write('\n')
 
             try:
                 if header:
-                    response = requests.get(url=url, headers=headers, proxies={'https': ip}, timeout=5)
-                    # response = requests.get(url=url, headers=headers, timeout=5)
+                    # response = requests.get(url=url, headers=headers, proxies={'https': ip}, timeout=5)
+                    response = requests.get(url=url, headers=headers, timeout=5)
                 else:
-                    response = requests.get(url=url, proxies={'https': ip}, timeout=5)
-                    # response = requests.get(url=url, timeout=5)
+                    # response = requests.get(url=url, proxies={'https': ip}, timeout=5)
+                    response = requests.get(url=url, timeout=5)
                 break
             except Exception as e:
                 debug(e)
-                self.p.delete_proxy(id)
+                # self.p.delete_proxy(id)
                 # response = self.crawl(url, header=header)
                 i += 1
 
@@ -80,7 +80,8 @@ class Crawl:
 
     def parse(self, mode=24):
         for type_pid, v in channel_ids.items():
-            if type_pid in ['', '2', '', '', '', '']:
+            if type_pid in ['', '2', '23', '', '', '1']:
+            # if type_pid in ['']:
                 continue
             channel_id = v.get('channel_id')
             three_category_ids = v.get('three_category_id')
@@ -88,7 +89,7 @@ class Crawl:
 
             if three_category_ids:
                 for type_id, three_category_id in three_category_ids.items():
-
+                    print(three_category_id)
                     if isinstance(three_category_id, int):
                         page = self.get_page(three_category_id)  # 根据条件过滤是否爬取和从哪一页爬取， 如果为0则不爬取
                         if page == 0:
@@ -355,7 +356,7 @@ class Crawl:
     def collect(self, albumId, vod_id, vod_name, type_pid):
         try:
             if type_pid in ['2', '4', '23']:
-                url = f'https://pcw-api.iqiyi.com/albums/album/avlistinfo?aid={albumId}&page=1&size=30'
+                url = f'https://pcw-api.iqiyi.com/albums/album/avlistinfo?aid={albumId}&page=1&size=200'
                 print('单集路由>>>', url)
                 response = self.crawl(url=url)
                 # 电视剧、动漫、纪录片
@@ -470,16 +471,19 @@ def main(mode=24):
             where = f"vod_iqiyi_albumId='{albumId}' or vod_douban_albumId='{albumId}' or vod_yk_albumId='{albumId}' or vod_tx_albumId='{albumId}'"
             try:
                 vod_details = dic.pop('vod_details')
-                vod_id, vod_name = mysqll.save(dic, 'tx_vod',  where, 'vod_iqiyi_albumId',)
+                # vod_id, vod_name = mysqll.save(dic, 'tx_vod',  where, 'vod_iqiyi_albumId',)
+                vod_id, vod_name = mysqll.save(dic, 'iqy_vod',  where, 'vod_iqiyi_albumId',)
                 where = f'vod_id={vod_id}'
-                mysqll.save({'vod_id': vod_id, 'vod_details': vod_details}, table='tx_vod_json', where=where)
-                # collect_lis = c.collect(albumId=albumId, vod_id=vod_id, type_pid=type_pid, vod_name=vod_name)
-                continue
+                mysqll.save({'vod_id': vod_id, 'vod_details': vod_details}, table='iqy_vod_json', where=where)
+                collect_lis = c.collect(albumId=albumId, vod_id=vod_id, type_pid=type_pid, vod_name=vod_name)
+                # continue
                 for collect_li in collect_lis:
                     where = f'albumId={collect_li.get("albumId")}'
                     collection_details = collect_li.pop('collection_details')
-                    collection_id, vod_name = mysqll.save(collect_li, 'tx_vod_collection', where, 'albumId',)
-                    mysqll.save({'collection_id': collection_id, 'collection_details': collection_details}, table='tx_vod_collection_json')
+                    # collection_id, vod_name = mysqll.save(collect_li, 'tx_vod_collection', where, 'albumId',)
+                    collection_id, vod_name = mysqll.save(collect_li, 'iqy_vod_collection', where, 'albumId',)
+                    # mysqll.save({'collection_id': collection_id, 'collection_details': collection_details}, table='tx_vod_collection_json')
+                    mysqll.save({'collection_id': collection_id, 'collection_details': collection_details}, table='iqy_vod_collection_json')
             except UnicodeEncodeError as e:
                 debug(e)
             except Exception as e:

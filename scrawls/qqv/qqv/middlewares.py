@@ -137,7 +137,7 @@ class ProxyMiddleware(object):
         return s
 
     def process_request(self, request, spider):
-        if spider.name in ['mango']:
+        if spider.name in ['mango', 'qqv']:
             return
         self.proxy()
         print('使用代理ip：' + str(self.ip))

@@ -153,6 +153,7 @@ class Save:
             id, vod_name = self.curs.fetchall()[0]
             return id, vod_name
         except Exception as e:
+
             return
         finally:
             self.conn.commit()
@@ -175,38 +176,67 @@ class QqvPipeline:
             # where = f'vod_iqiyi_albumId="{albumId}" or vod_douban_albumId="{albumId}" or vod_yk_albumId="{albumId}" or vod_tx_albumId="{albumId}" or vod_mango_albumId = "{albumId}"'
             where = f'vod_iqiyi_albumId="{albumId}" or vod_douban_albumId="{albumId}" or vod_yk_albumId="{albumId}" or vod_tx_albumId="{albumId}" or vod_mango_albumId = "{albumId}"'
             if sav.get('vod_tx_albumId'):
-                vod_id, vod_name = save.save(sav, 'tx_vod', where, 'vod_tx_albumId')
+                # vod_id, vod_name = save.save(sav, 'tx_vod', where, 'vod_tx_albumId')
+                vod_id, vod_name = save.save(sav, 'iqy_vod', where, 'vod_tx_albumId')
             elif sav.get('vod_mango_albumId'):
-                vod_id, vod_name = save.save(sav, 'tx_vod', where, 'vod_mango_albumId')
+                # vod_id, vod_name = save.save(sav, 'tx_vod', where, 'vod_mango_albumId')
+                vod_id, vod_name = save.save(sav, 'iqy_vod', where, 'vod_mango_albumId')
+
             if vod_details:
                 where = f'vod_id={vod_id}'
                 if isinstance(vod_details, dict):
                     vod_details = json.dumps(vod_details)
-                save.save({'vod_id': vod_id, 'vod_details': vod_details}, 'tx_vod_json', where, 'vod_id', returns=('id', ))  # 存储json
+                # save.save({'vod_id': vod_id, 'vod_details': vod_details}, 'tx_vod_json', where, 'vod_id', returns=('id', ))  # 存储json
+                save.save({'vod_id': vod_id, 'vod_details': vod_details}, 'iqy_vod_json', where, 'vod_id', returns=('id', ))  # 存储json
             save.close()
             return item
 
         elif isinstance(item, Tx_vod_collection):
             sav = item.__dict__.get('_values')
+            print('----------------------------------------')
             collection = sav.get('collection')
             try:
                 if int(collection) == 31:
                     print(sav.get('vod_name') + '>>>' + collection + '>>>' + sav.get('collection_url'))
             except Exception:
                 pass
-            vod_tx_albumId = sav.pop('vod_tx_albumId')
+
+            try:
+                vod_tx_albumId = sav.pop('vod_tx_albumId')
+            except KeyError:
+                vod_tx_albumId = None
+            try:
+                vod_mango_albumId = sav.pop('vod_mango_albumId')
+            except KeyError:
+                vod_mango_albumId = None
+
             save = Save()
-            sql = f'select id from tx_vod where vod_tx_albumId="{vod_tx_albumId}"'
+
+            if vod_tx_albumId:
+                sql = f'select id from iqy_vod where vod_tx_albumId="{vod_tx_albumId}"'
+            elif vod_mango_albumId:
+                sql = f'select id from iqy_vod where vod_mango_albumId="{vod_mango_albumId}"'
+
             curs, conn = save.query(sql=sql)
+            print('curs', curs)
+
             if curs:
                 ids = curs.fetchone()
+                print(ids)
                 if ids:
                     id = ids[0]
                     sav['vod_id'] = id
                     where = f'albumId="{sav.get("albumId")}"'
-                    # collection_details = sav.pop('collection_details')
-                    collection_id, vod_name = save.save(sav, 'tx_vod_collection', where, 'albumId')
+                    try:
+                        collection_details = sav.pop('collection_details')
+                    except KeyError:
+                        collection_details = json.dumps({}, ensure_ascii=False)
+                    # collection_id, vod_name = save.save(sav, 'tx_vod_collection', where, 'albumId')
+
+                    collection_id, vod_name = save.save(sav, 'iqy_vod_collection', where, 'albumId')
                     # save.save({'collection_id': collection_id, 'collection_details': collection_details},
                     #             table='tx_vod_collection_json')
+                    save.save({'collection_id': collection_id, 'collection_details': collection_details},
+                                table='iqy_vod_collection_json')
                     conn.close()
                     return item

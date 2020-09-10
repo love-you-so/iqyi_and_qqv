@@ -30,17 +30,21 @@ class DmozSpider(scrapy.spiders.Spider):
     }
 
     # starts 格式， 配置不需要爬取的项目的offset  offset 为-1代表过滤掉 offsize 为30
-    # starts = {
-    #         '1': [{'itype': 100004, 'iarea': 100004, 'offset': 120}],
-    #         '2': [{'iarea': 814, 'offset': 30}],
-    #         '23': [{'itrailer': -1, 'offset': 30}],
-    #         '3': [{'iarea': 1, 'offset': 30}],
-    # }
     starts = {
-        '23': [{'itrailer': -1, 'offset': 30}],
-        '3': [{'iarea': 1, 'offset': 2040}],
-        '4': [{'iarea': 2, 'offset': 630}, {'iarea': 1, 'offset': 1110}, {'iarea': 90, 'offset': 1110}],
-        '19': [{'iarea': 1, 'offset': 1110}],
+        '23': [{'itrailer': -1, 'offset': 3420}],
+        '1': [{'itype': 100018, 'iarea': 100029, 'offset': 1680}, {'itype': 100004, 'iarea': 100032, 'offset': 540},
+              {'itype': 100012, 'iarea': 100032, 'offset': 60}, {'itype': 100007, 'iarea': 100032, 'offset': 60},
+              {'itype': 100006, 'iarea': 100032, 'offset': 60}, {'itype': 100018, 'iarea': 100032, 'offset': 1110},
+              {'itype': 100005, 'iarea': 100032, 'offset': 360}, {'itype': 100061, 'iarea': 100032, 'offset': 180},
+              {'itype': 100004, 'iarea': 100026, 'offset': 30}, {'itype': 100018, 'iarea': 100026, 'offset': 120},
+              {'itype': 100061, 'iarea': 100032, 'offset': 180}, {'itype': 100061, 'iarea': 100032, 'offset': 180}
+
+              ],
+        '3': [{'iarea': 1, 'offset': 3420}, {'iarea': 2, 'offset': 60}],
+        '2': [{'iarea': 815, 'offset': 570}, {'iarea': 818, 'offset': 90}, {'iarea': 816, 'offset': 120}, {'iarea': 9, 'offset': 30}, {'iarea': 814, 'offset': 4950},
+              {'iarea': 14, 'offset': 30}],
+        '4': [{'iarea': 1, 'offset': 1080}, {'iarea': 2, 'offset': 600}, {'iarea': 3, 'offset': 60}],
+        # '19': [{'iarea': 1, 'offset': 1110}],
     }
 
     def parse(self, response):
@@ -48,8 +52,8 @@ class DmozSpider(scrapy.spiders.Spider):
         for type_pid, v in self.channel_ids.items():
             urls = []
             print(type_pid in ['1', '2', '', '', ''])
-            if type_pid in ['1', '2', '', '', '']:
-            # if type_pid in []:
+            # if type_pid in ['', '1', '2', '3', '4']:
+            if type_pid in []:
                 continue
             channel = v.get('channel')
             iarea = v.get('iarea')
@@ -295,7 +299,7 @@ class DmozSpider(scrapy.spiders.Spider):
         yield Request(url=collect_url, callback=self.collect_list, dont_filter=True,
                       meta={'tx_item': tx_item, 'firstcoolects': 1})
         for i in range(1, collect_page+1):
-            break  # 取消爬取分集
+            # break  # 取消爬取分集
             if collect_page != vod_total/30:
                 collctlast_id = video_ids[30 * i]
 
@@ -317,7 +321,7 @@ class DmozSpider(scrapy.spiders.Spider):
             vod_director = ''
 
         tx_item['vod_director'] = vod_director.replace("'", '')
-        collects_spans = html.xpath('//div[@class="mod_episode"]/span')
+        collects_spans = html.xpath('//div[@class="mod_episode"]/span')  # 电视剧的片花没有，
 
         vod_tx_albumId = tx_item['vod_tx_albumId']
 
@@ -336,7 +340,7 @@ class DmozSpider(scrapy.spiders.Spider):
                     isend = 1
                 else:
                     src = mark_v[0]
-                    if 'text_yu' in src:
+                    if '_yu' in src:
                         vod_state = 2
                         isend = 0
 
@@ -370,7 +374,7 @@ class DmozSpider(scrapy.spiders.Spider):
 
         tx_item['vod_area'] = vod_area
         yield tx_item
-        return  # 取消爬取分集
+        # return  # 取消爬取分集
         if collects_spans:
             for collects_span in collects_spans:
                 vod_id = 0
@@ -401,7 +405,7 @@ class DmozSpider(scrapy.spiders.Spider):
                     collection_is_state = 1        # 资源类型， 1正片 2预告片
                 else:
                     src = mark_v[0]
-                    if 'text_yu' in src:
+                    if '_yu' in src:
                         collection_is_pay_mark = 0
                         collection_is_state = 2
                     else:
@@ -448,7 +452,12 @@ class DmozSpider(scrapy.spiders.Spider):
             elif type_pid == '3':
                 collects = html.xpath(
                     '//div[@class="mod_figure mod_figure_list mod_figure_list_sm"]/ul[@class="figure_list" and @_wind="columnname=往期"]/li')
-                print(collects)
+                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', collects)
+            elif type_pid == '2':
+                return
+            elif type_pid == '23':
+                collects = html.xpath('//div[@class="mod_figure mod_figure_list mod_figure_list_sm" and @_wind="columnname=本期看点"]/ul/li')
+
             for collect in collects:
                 duration = collect.xpath('a[@class="figure"]/div[@class="figure_count"]/span/text()')
                 if duration:
@@ -492,7 +501,7 @@ class DmozSpider(scrapy.spiders.Spider):
                     collection_is_state = 1  # 资源类型， 1正片 2预告片
                 else:
                     src = mark_v[0]
-                    if 'text_yu' in src:
+                    if '_yu' in src:
                         collection_is_pay_mark = 0
                         collection_is_state = 2
                     else:
